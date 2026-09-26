@@ -4,8 +4,6 @@
 
 **A self-hosted Markdown editor and live previewer where your documents never leave the browser.**
 
-### [Try it online →](https://ovasendin.github.io/markdown_preview_editor/)
-
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Tracking: none](https://img.shields.io/badge/tracking-none-brightgreen.svg)
 ![Static site](https://img.shields.io/badge/hosting-any%20static%20host-informational.svg)
@@ -13,6 +11,8 @@
 ![Screenshot](.github/screenshot.png)
 
 </div>
+
+### [Try it online →](https://ovasendin.github.io/markdown_preview_editor/)
 
 A static website you host yourself. Everything is processed locally in the browser: there is no backend, no analytics and no CDN. A strict Content-Security-Policy forbids the page from sending data anywhere.
 
