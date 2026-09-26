@@ -21,6 +21,11 @@ const tr: Messages = {
   'file.htmlTitle': 'Bağımsız bir HTML dosyasına aktar',
   'file.print': 'Yazdır',
   'file.printTitle': 'Yazdır veya PDF olarak kaydet',
+  'menu.title': 'Menü',
+  'menu.folder': 'Klasör aç',
+  'menu.save': '.md olarak kaydet',
+  'menu.html': 'HTML olarak dışa aktar',
+  'menu.print': 'Yazdır / PDF olarak kaydet',
 
   'pane.editor': 'Düzenleyici',
   'pane.preview': 'Önizleme',

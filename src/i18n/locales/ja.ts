@@ -21,6 +21,11 @@ const ja: Messages = {
   'file.htmlTitle': '単体で動作する HTML ファイルにエクスポート',
   'file.print': '印刷',
   'file.printTitle': '印刷または PDF として保存',
+  'menu.title': 'メニュー',
+  'menu.folder': 'フォルダーを開く',
+  'menu.save': '.md として保存',
+  'menu.html': 'HTML にエクスポート',
+  'menu.print': '印刷 / PDF として保存',
 
   'pane.editor': 'エディター',
   'pane.preview': 'プレビュー',

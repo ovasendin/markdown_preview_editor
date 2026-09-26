@@ -22,6 +22,11 @@ const en = {
   'file.htmlTitle': 'Export to a self-contained HTML file',
   'file.print': 'Print',
   'file.printTitle': 'Print or save as PDF',
+  'menu.title': 'Menu',
+  'menu.folder': 'Open folder',
+  'menu.save': 'Save as .md',
+  'menu.html': 'Export to HTML',
+  'menu.print': 'Print / save as PDF',
 
   // Layout
   'pane.editor': 'Editor',

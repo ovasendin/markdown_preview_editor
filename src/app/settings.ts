@@ -12,6 +12,8 @@ export interface Settings {
   wrap: boolean;
   /** Interface language; null follows the browser. */
   lang: string | null;
+  /** Phone layout: formatting toolbar expanded. */
+  mobileToolbar: boolean;
 }
 
 const KEY = 'mpe:settings';
@@ -27,6 +29,7 @@ const DEFAULTS: Settings = {
   lineNumbers: false,
   wrap: true,
   lang: null,
+  mobileToolbar: false,
 };
 
 /** localStorage can throw (private mode, blocked storage); never let that break the app. */

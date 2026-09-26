@@ -1,7 +1,7 @@
 import './styles/app.css';
 import {
   FolderOpen, FolderInput, Save, FileDown, Printer, PenLine, Columns2, Eye, Sun, Moon, Settings, ShieldCheck,
-  ShieldAlert, Lock, Plus, X, FileUp, TriangleAlert,
+  ShieldAlert, Lock, Plus, X, FileUp, TriangleAlert, Menu, Type, ChevronDown,
 } from 'lucide';
 import { Editor } from './app/editor';
 import { Preview } from './app/preview';
@@ -678,9 +678,9 @@ function setupLayout() {
 
 function renderHeaderActions() {
   const actions: { label: string; title: string; icon: typeof Save; run: () => void; cls?: string }[] = [
-    { label: t('file.open'), title: t('file.openTitle'), icon: FolderOpen, run: () => pickFiles() },
+    { label: t('file.open'), title: t('file.openTitle'), icon: FolderOpen, run: () => pickFiles(), cls: 'btn-open' },
     { label: t('file.folder'), title: t('file.folderTitle'), icon: FolderInput, run: () => pickFiles(true), cls: 'hide-sm' },
-    { label: t('file.save'), title: t('file.saveTitle'), icon: Save, run: saveActive },
+    { label: t('file.save'), title: t('file.saveTitle'), icon: Save, run: saveActive, cls: 'hide-sm' },
     { label: t('file.html'), title: t('file.htmlTitle'), icon: FileDown, run: exportHtml, cls: 'hide-sm' },
     { label: t('file.print'), title: t('file.printTitle'), icon: Printer, run: () => preview.print(), cls: 'hide-sm' },
   ];
@@ -701,14 +701,63 @@ function setupHeader() {
   settingsBtn.append(icon(Settings));
   bindPopover(settingsBtn, $('settings-panel'));
 
-  $('theme-btn').addEventListener('click', () => {
-    settings.theme = effectiveTheme() === 'dark' ? 'light' : 'dark';
+  $('theme-btn').addEventListener('click', toggleTheme);
+
+  // Phone layout: secondary actions, protection, theme and settings live in one menu.
+  const menuBtn = $('menu-btn');
+  menuBtn.append(icon(Menu));
+  menuBtn.addEventListener('click', renderMobileMenu); // registered first: fills the menu before it opens
+  bindPopover(menuBtn, $('mobile-menu'));
+
+  $('toolbar-toggle').addEventListener('click', () => {
+    settings.mobileToolbar = !settings.mobileToolbar;
     saveSettings();
-    applyTheme();
+    renderToolbarToggle();
   });
 
   $('status-issues').addEventListener('click', showIssues);
   $('status-private').prepend(icon(Lock, 13));
+}
+
+function toggleTheme() {
+  settings.theme = effectiveTheme() === 'dark' ? 'light' : 'dark';
+  saveSettings();
+  applyTheme();
+}
+
+function renderMobileMenu() {
+  const menuBtn = $('menu-btn');
+  const full = !protection.links && !protection.images && !protection.media;
+  const dark = effectiveTheme() === 'dark';
+  const item = (ic: typeof Save, label: string, run: () => void, cls = '') => {
+    const b = h('button', { type: 'button', class: `menu-item ${cls}`, role: 'menuitem' }, icon(ic, 17), h('span', {}, label));
+    b.addEventListener('click', run);
+    return b;
+  };
+  const then = (run: () => void) => () => {
+    closePopover();
+    run();
+  };
+  $('mobile-menu').replaceChildren(
+    item(FolderInput, t('menu.folder'), then(() => pickFiles(true))),
+    item(Save, t('menu.save'), then(saveActive)),
+    item(FileDown, t('menu.html'), then(exportHtml)),
+    item(Printer, t('menu.print'), then(() => preview.print())),
+    h('div', { class: 'menu-sep', role: 'separator' }),
+    // Opening another popover closes this menu and anchors the panel to the menu button.
+    item(full ? ShieldCheck : ShieldAlert, t(full ? 'prot.full' : 'prot.relaxed'), () => showPopover(menuBtn, $('protection-panel')), full ? 'is-full' : 'is-relaxed'),
+    item(dark ? Sun : Moon, t(dark ? 'theme.light' : 'theme.dark'), then(toggleTheme)),
+    item(Settings, t('settings.title'), () => showPopover(menuBtn, $('settings-panel'))),
+  );
+}
+
+/** On phones the formatting toolbar sits behind this toggle (the advanced row is a second level). */
+function renderToolbarToggle() {
+  const open = settings.mobileToolbar;
+  const btn = $('toolbar-toggle');
+  btn.replaceChildren(icon(Type, 16), h('span', {}, t('toolbar.formatting')), icon(ChevronDown, 14));
+  btn.setAttribute('aria-expanded', String(open));
+  $('editor-pane').classList.toggle('toolbar-open', open);
 }
 
 // ---------------------------------------------------------------- language
@@ -747,6 +796,7 @@ function buildEditorToolbar() {
 /** Re-renders every piece of UI text in the current language, without losing any state. */
 function applyLanguage() {
   translateDom();
+  renderToolbarToggle();
   setupLanguageSelect();
   renderHeaderActions();
   renderViewModes();

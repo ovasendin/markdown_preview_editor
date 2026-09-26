@@ -21,6 +21,11 @@ const de: Messages = {
   'file.htmlTitle': 'Als eigenständige HTML-Datei exportieren',
   'file.print': 'Drucken',
   'file.printTitle': 'Drucken oder als PDF speichern',
+  'menu.title': 'Menü',
+  'menu.folder': 'Ordner öffnen',
+  'menu.save': 'Als .md speichern',
+  'menu.html': 'Als HTML exportieren',
+  'menu.print': 'Drucken / als PDF speichern',
 
   'pane.editor': 'Editor',
   'pane.preview': 'Vorschau',

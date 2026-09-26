@@ -21,6 +21,11 @@ const nl: Messages = {
   'file.htmlTitle': 'Exporteren naar een zelfstandig HTML-bestand',
   'file.print': 'Afdrukken',
   'file.printTitle': 'Afdrukken of opslaan als pdf',
+  'menu.title': 'Menu',
+  'menu.folder': 'Map openen',
+  'menu.save': 'Opslaan als .md',
+  'menu.html': 'Exporteren naar HTML',
+  'menu.print': 'Afdrukken / opslaan als pdf',
 
   'pane.editor': 'Editor',
   'pane.preview': 'Voorbeeld',

@@ -21,6 +21,11 @@ const es: Messages = {
   'file.htmlTitle': 'Exportar a un archivo HTML independiente',
   'file.print': 'Imprimir',
   'file.printTitle': 'Imprimir o guardar como PDF',
+  'menu.title': 'Menú',
+  'menu.folder': 'Abrir carpeta',
+  'menu.save': 'Guardar como .md',
+  'menu.html': 'Exportar a HTML',
+  'menu.print': 'Imprimir / guardar como PDF',
 
   'pane.editor': 'Editor',
   'pane.preview': 'Vista previa',

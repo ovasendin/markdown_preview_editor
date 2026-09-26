@@ -21,6 +21,11 @@ const ko: Messages = {
   'file.htmlTitle': '독립 실행형 HTML 파일로 내보내기',
   'file.print': '인쇄',
   'file.printTitle': '인쇄 또는 PDF로 저장',
+  'menu.title': '메뉴',
+  'menu.folder': '폴더 열기',
+  'menu.save': '.md로 저장',
+  'menu.html': 'HTML로 내보내기',
+  'menu.print': '인쇄 / PDF로 저장',
 
   'pane.editor': '편집기',
   'pane.preview': '미리 보기',

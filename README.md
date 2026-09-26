@@ -32,7 +32,9 @@ A static website you host yourself. Everything is processed locally in the brows
 
 ## Installation
 
-Build once with `npm ci && npm run build`, then choose how to serve it:
+**Quickest way:** download the ready-made site archive — [markdown-preview-editor-site.zip](https://github.com/ovasendin/markdown_preview_editor/releases/latest/download/markdown-preview-editor-site.zip) (also available as [.tar.gz](https://github.com/ovasendin/markdown_preview_editor/releases/latest/download/markdown-preview-editor-site.tar.gz)) — extract it on your hosting, and the site works. No build step needed.
+
+Or build it yourself with `npm ci && npm run build`, then choose how to serve it:
 
 - **Your website** — extract `release/markdown-preview-editor-site.tar.gz` (or `.zip`) into your site's folder on any static hosting. The included `.htaccess` enables HTTPS and security headers on Apache/LiteSpeed.
 - **Docker** — `docker compose -f deploy/docker-compose.yml up -d --build`, then open http://localhost:8080.

@@ -25,11 +25,15 @@
         <button type="button" id="protection-btn" class="protection-btn"></button>
         <button type="button" id="theme-btn" class="icon-btn" title="Toggle theme"></button>
         <button type="button" id="settings-btn" class="icon-btn" title="Settings" data-i18n-title="settings.title"></button>
+        <button type="button" id="menu-btn" class="icon-btn menu-btn" title="Menu" data-i18n-title="menu.title" data-i18n-aria="menu.title"></button>
       </header>
 
       <main class="workspace" id="workspace" data-view="both">
         <section class="pane editor-pane" id="editor-pane" aria-label="Editor" data-i18n-aria="pane.editor">
-          <div class="tabs" id="tabs" role="tablist"></div>
+          <div class="tabs-row">
+            <div class="tabs" id="tabs" role="tablist"></div>
+            <button type="button" id="toolbar-toggle" class="toolbar-toggle" aria-controls="toolbar" aria-expanded="false"></button>
+          </div>
           <div class="toolbar" id="toolbar" role="toolbar" aria-label="Formatting" data-i18n-aria="toolbar.formatting"></div>
           <div class="toolbar toolbar-advanced" id="toolbar-advanced" role="toolbar" aria-label="Advanced editor" data-i18n-aria="tb.advanced" hidden></div>
           <div class="editor-host" id="editor-host"></div>
@@ -118,6 +122,7 @@
     </div>
 
     <div id="heading-menu" class="popover menu" role="menu" hidden></div>
+    <div id="mobile-menu" class="popover menu" role="menu" hidden></div>
 
     <input type="file" id="file-input" multiple hidden accept=".md,.markdown,.mdown,.mkd,.mkdn,.mdx,.txt,image/*,audio/*,video/*">
     <input type="file" id="folder-input" webkitdirectory multiple hidden>

@@ -21,6 +21,11 @@ const ru: Messages = {
   'file.htmlTitle': 'Экспорт в самостоятельный HTML-файл',
   'file.print': 'Печать',
   'file.printTitle': 'Печать или сохранение в PDF',
+  'menu.title': 'Меню',
+  'menu.folder': 'Открыть папку',
+  'menu.save': 'Сохранить как .md',
+  'menu.html': 'Экспорт в HTML',
+  'menu.print': 'Печать / сохранить как PDF',
 
   'pane.editor': 'Редактор',
   'pane.preview': 'Предпросмотр',

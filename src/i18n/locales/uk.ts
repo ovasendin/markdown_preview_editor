@@ -21,6 +21,11 @@ const uk: Messages = {
   'file.htmlTitle': 'Експортувати в самостійний HTML-файл',
   'file.print': 'Друк',
   'file.printTitle': 'Друк або збереження в PDF',
+  'menu.title': 'Меню',
+  'menu.folder': 'Відкрити папку',
+  'menu.save': 'Зберегти як .md',
+  'menu.html': 'Експорт у HTML',
+  'menu.print': 'Друк / зберегти як PDF',
 
   'pane.editor': 'Редактор',
   'pane.preview': 'Перегляд',

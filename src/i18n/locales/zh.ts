@@ -21,6 +21,11 @@ const zh: Messages = {
   'file.htmlTitle': '导出为独立的 HTML 文件',
   'file.print': '打印',
   'file.printTitle': '打印或另存为 PDF',
+  'menu.title': '菜单',
+  'menu.folder': '打开文件夹',
+  'menu.save': '另存为 .md',
+  'menu.html': '导出为 HTML',
+  'menu.print': '打印 / 另存为 PDF',
 
   'pane.editor': '编辑器',
   'pane.preview': '预览',

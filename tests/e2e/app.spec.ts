@@ -202,3 +202,38 @@ test.describe('languages', () => {
     expect(await editorText(page)).toBe('# Mein Text');
   });
 });
+
+test.describe('phone layout', () => {
+  test.use({ viewport: { width: 390, height: 800 }, locale: 'en-US' });
+
+  test('keeps Open and view modes in the header, moves the rest into a menu', async ({ page }) => {
+    await openApp(page);
+    await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeVisible();
+    await expect(page.locator('#view-mode button')).toHaveCount(3);
+    for (const id of ['#protection-btn', '#theme-btn', '#settings-btn']) await expect(page.locator(id)).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeHidden();
+
+    await page.locator('#menu-btn').click();
+    const menu = page.locator('#mobile-menu');
+    for (const label of ['Open folder', 'Save as .md', 'Export to HTML', 'Print / save as PDF', 'Full protection', 'Settings']) {
+      await expect(menu.getByRole('menuitem', { name: label })).toBeVisible();
+    }
+    await menu.getByRole('menuitem', { name: 'Full protection' }).click();
+    await expect(page.locator('#protection-panel')).toBeVisible();
+    await expect(menu).toBeHidden();
+  });
+
+  test('formatting toolbar and advanced row are two nested spoilers', async ({ page }) => {
+    await openApp(page);
+    await expect(page.locator('#toolbar')).toBeHidden();
+    await page.locator('#toolbar-toggle').click();
+    await expect(page.locator('#toolbar')).toBeVisible();
+    await expect(page.locator('#toolbar-advanced')).toBeHidden();
+    await page.locator('.tool-advanced-toggle').click();
+    await expect(page.locator('#toolbar-advanced')).toBeVisible();
+    await page.locator('#toolbar-toggle').click();
+    await expect(page.locator('#toolbar, #toolbar-advanced')).toHaveCount(2);
+    await expect(page.locator('#toolbar')).toBeHidden();
+    await expect(page.locator('#toolbar-advanced')).toBeHidden();
+  });
+});

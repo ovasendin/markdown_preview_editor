@@ -21,6 +21,11 @@ const sv: Messages = {
   'file.htmlTitle': 'Exportera till en fristående HTML-fil',
   'file.print': 'Skriv ut',
   'file.printTitle': 'Skriv ut eller spara som PDF',
+  'menu.title': 'Meny',
+  'menu.folder': 'Öppna mapp',
+  'menu.save': 'Spara som .md',
+  'menu.html': 'Exportera till HTML',
+  'menu.print': 'Skriv ut / spara som PDF',
 
   'pane.editor': 'Redigerare',
   'pane.preview': 'Förhandsvisning',
