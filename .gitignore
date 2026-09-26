@@ -1,0 +1,35 @@
+# Dependencies and build output
+node_modules/
+dist/
+release/
+
+# Generated from scripts/security.mjs and src/ during build
+public/.htaccess
+public/preview/vendor/
+public/preview/p-*.html
+public/preview/preview.css
+
+# Test output
+test-results/
+playwright-report/
+blob-report/
+coverage/
+
+# Private notes (Russian docs for the maintainer)
+docs/
+
+# Local / personal files that must never be published
+.tmp/
+.env
+.env.*
+*.local
+*.pem
+*.key
+*.p12
+.claude/
+.vscode/
+.idea/
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini

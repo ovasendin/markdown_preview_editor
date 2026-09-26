@@ -1,0 +1,279 @@
+/* Styles for the rendered document (preview frame and HTML export).
+   github-markdown-css provides the typography; this file adds layout and the
+   security placeholders/badges. */
+html {
+  --pv-bg: #ffffff;
+  --pv-muted: #59636e;
+  --pv-border: #d1d9e0;
+  --pv-soft: #f6f8fa;
+  --pv-warn: #9a6700;
+  --pv-warn-soft: #fff8c5;
+  --pv-danger: #cf222e;
+  --pv-danger-soft: #ffebe9;
+  --pv-accent: #4f46e5;
+  background: var(--pv-bg);
+}
+
+html[data-theme='dark'] {
+  --pv-bg: #0d1117;
+  --pv-muted: #9198a1;
+  --pv-border: #3d444d;
+  --pv-soft: #151b23;
+  --pv-warn: #d29922;
+  --pv-warn-soft: rgba(187, 128, 9, 0.15);
+  --pv-danger: #f85149;
+  --pv-danger-soft: rgba(248, 81, 73, 0.12);
+  --pv-accent: #8b8cf8;
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--pv-bg);
+}
+
+.markdown-body {
+  box-sizing: border-box;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 32px 40px 80px;
+  background: var(--pv-bg) !important;
+}
+
+@media (max-width: 640px) {
+  .markdown-body {
+    padding: 20px 16px 60px;
+  }
+}
+
+.markdown-body img,
+.markdown-body video {
+  max-width: 100%;
+}
+
+.markdown-body video {
+  display: block;
+  border-radius: 6px;
+  background: #000;
+}
+
+.markdown-body audio {
+  width: min(100%, 480px);
+}
+
+/* table alignment (inline styles are forbidden by the security policy) */
+.markdown-body .align-left {
+  text-align: left;
+}
+
+.markdown-body .align-center {
+  text-align: center;
+}
+
+.markdown-body .align-right {
+  text-align: right;
+}
+
+/* ---------------------------------------------------------------- links */
+.markdown-body .link-disabled {
+  color: var(--pv-muted);
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: help;
+}
+
+.markdown-body .link-blocked {
+  color: var(--pv-danger);
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+.markdown-body .link-local {
+  color: var(--pv-muted);
+  border-bottom: 1px dashed var(--pv-border);
+  cursor: help;
+}
+
+.markdown-body a.doc-link {
+  cursor: pointer;
+}
+
+.markdown-body a[data-risk='warn'] {
+  text-decoration-color: var(--pv-warn);
+  text-decoration-style: wavy;
+}
+
+.risk-badge {
+  display: inline-block;
+  margin: 0 2px 0 3px;
+  padding: 0 4px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  line-height: 1.5;
+  vertical-align: 0.1em;
+  cursor: help;
+  user-select: none;
+}
+
+.risk-warn {
+  background: var(--pv-warn-soft);
+  color: var(--pv-warn);
+}
+
+.risk-danger {
+  background: var(--pv-danger-soft);
+  color: var(--pv-danger);
+}
+
+/* ---------------------------------------------------------------- media placeholders */
+.media-placeholder {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 100%;
+  margin: 4px 0;
+  padding: 10px 14px;
+  border: 1px dashed var(--pv-border);
+  border-radius: 8px;
+  background: var(--pv-soft);
+  color: var(--pv-muted);
+  font-size: 13px;
+  line-height: 1.4;
+  vertical-align: middle;
+  cursor: help;
+}
+
+div.media-placeholder {
+  display: flex;
+}
+
+.mp-icon {
+  font-size: 18px;
+  line-height: 1.1;
+}
+
+.mp-body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mp-title {
+  font-weight: 600;
+}
+
+.mp-detail {
+  font-family: ui-monospace, 'Cascadia Code', Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  overflow-wrap: anywhere;
+  opacity: 0.85;
+}
+
+.mp-danger {
+  border-color: var(--pv-danger);
+  background: var(--pv-danger-soft);
+  color: var(--pv-danger);
+}
+
+.mp-missing {
+  border-style: dotted;
+}
+
+/* ---------------------------------------------------------------- diagrams & math */
+.mermaid-block {
+  margin: 16px 0;
+  text-align: center;
+}
+
+.mermaid-block .mermaid-src {
+  text-align: left;
+  opacity: 0.6;
+}
+
+.mermaid-diagram {
+  max-width: 100%;
+  height: auto;
+}
+
+.mermaid-error {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--pv-danger-soft);
+  color: var(--pv-danger);
+  font-size: 13px;
+  text-align: left;
+  white-space: pre-wrap;
+}
+
+.math-display {
+  margin: 16px 0;
+  overflow-x: auto;
+  text-align: center;
+}
+
+.math:not(.math-rendered) {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  color: var(--pv-muted);
+}
+
+.math-display math {
+  font-size: 1.15em;
+}
+
+/* ---------------------------------------------------------------- misc */
+.front-matter {
+  margin-bottom: 16px;
+  padding: 6px 12px;
+  border: 1px solid var(--pv-border);
+  border-radius: 6px;
+  background: var(--pv-soft);
+  font-size: 13px;
+}
+
+.front-matter summary {
+  color: var(--pv-muted);
+  cursor: pointer;
+}
+
+.front-matter pre {
+  margin: 8px 0 4px;
+}
+
+.markdown-body .task-list-item-checkbox {
+  margin-right: 6px;
+}
+
+.markdown-body :target {
+  scroll-margin-top: 16px;
+}
+
+.markdown-body .markdown-alert-title {
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------- print */
+@media print {
+  html,
+  body,
+  .markdown-body {
+    background: #fff !important;
+  }
+
+  .markdown-body {
+    max-width: none;
+    padding: 0;
+  }
+
+  .risk-badge,
+  .media-placeholder {
+    border: 1px solid #999;
+  }
+
+  .markdown-body pre,
+  .markdown-body table,
+  .markdown-body img,
+  .mermaid-block {
+    break-inside: avoid;
+  }
+}

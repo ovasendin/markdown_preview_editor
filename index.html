@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="referrer" content="no-referrer">
+    <meta name="color-scheme" content="light dark">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="description" content="Markdown editor and previewer. Documents are processed only in your browser and are never sent anywhere.">
+    <title>Markdown Preview Editor</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <script src="/browser-check.js"></script>
+    <script type="module" src="/src/main.ts"></script>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand" title="Markdown Preview Editor">
+          <span class="brand-mark" aria-hidden="true">M↓</span>
+          <span class="brand-name">Markdown Preview</span>
+        </div>
+        <div class="topbar-group" id="file-actions"></div>
+        <div class="spacer"></div>
+        <div class="segmented" id="view-mode" role="radiogroup" aria-label="View mode"></div>
+        <button type="button" id="protection-btn" class="protection-btn"></button>
+        <button type="button" id="theme-btn" class="icon-btn" title="Toggle theme"></button>
+        <button type="button" id="settings-btn" class="icon-btn" title="Settings"></button>
+      </header>
+
+      <main class="workspace" id="workspace" data-view="both">
+        <section class="pane editor-pane" id="editor-pane" aria-label="Editor">
+          <div class="tabs" id="tabs" role="tablist"></div>
+          <div class="toolbar" id="toolbar" role="toolbar" aria-label="Formatting"></div>
+          <div class="toolbar toolbar-advanced" id="toolbar-advanced" role="toolbar" aria-label="Advanced editor" hidden></div>
+          <div class="editor-host" id="editor-host"></div>
+          <div class="drop-overlay" id="drop-overlay" hidden>
+            <div class="drop-card">
+              <div class="drop-icon" id="drop-icon"></div>
+              <div class="drop-title">Drop to open</div>
+              <div class="drop-hint">.md, .txt, images, audio, video or a whole folder.<br>Files are read only in your browser and are never uploaded.</div>
+            </div>
+          </div>
+        </section>
+        <div class="resizer" id="resizer" role="separator" aria-orientation="vertical" aria-label="Resize panes" tabindex="0"></div>
+        <section class="pane preview-pane" id="preview-pane" aria-label="Preview">
+          <div class="preview-host" id="preview-host"></div>
+        </section>
+      </main>
+
+      <footer class="statusbar">
+        <div class="status-left" id="status-counts"></div>
+        <div class="status-right">
+          <button type="button" class="status-issues" id="status-issues" hidden></button>
+          <span class="status-encoding" id="status-encoding"></span>
+          <span class="status-private" id="status-private"></span>
+        </div>
+      </footer>
+    </div>
+
+    <div id="protection-panel" class="popover protection-panel" role="dialog" aria-label="Protection" hidden>
+      <label class="check check-main">
+        <input type="checkbox" id="prot-full" checked>
+        <span class="check-box" aria-hidden="true"></span>
+        <span class="check-text">
+          <span class="check-title">Full protection</span>
+          <span class="check-desc">The document cannot access the network: external links are inactive; external images, audio and video are not loaded.</span>
+        </span>
+      </label>
+      <div class="perm-title">Permissions</div>
+      <label class="check">
+        <input type="checkbox" id="prot-links">
+        <span class="check-box" aria-hidden="true"></span>
+        <span class="check-text">
+          <span class="check-title">Allow links</span>
+          <span class="check-desc">Open in a new tab without revealing this page's address. Suspicious ones only after confirmation.</span>
+        </span>
+      </label>
+      <label class="check">
+        <input type="checkbox" id="prot-images">
+        <span class="check-box" aria-hidden="true"></span>
+        <span class="check-text">
+          <span class="check-title">Allow external images</span>
+          <span class="check-desc">The image server will see your IP address and when you opened the document.</span>
+        </span>
+      </label>
+      <label class="check">
+        <input type="checkbox" id="prot-media">
+        <span class="check-box" aria-hidden="true"></span>
+        <span class="check-text">
+          <span class="check-title">Allow external audio &amp; video</span>
+          <span class="check-desc">Standard player controls, never autoplay.</span>
+        </span>
+      </label>
+      <div class="prot-note">
+        <strong>Lightweight threat check.</strong> Links and media are also checked with heuristics: phishing tricks, look-alike domains, executables, local network addresses. Dangerous items are always blocked. This is not an antivirus.
+      </div>
+      <div class="prot-note prot-note-muted">
+        Images and media dropped together with a document are always shown — they need no network. Permissions reset when the page is reloaded.
+      </div>
+    </div>
+
+    <div id="settings-panel" class="popover settings-panel" role="dialog" aria-label="Settings" hidden>
+      <label class="switch"><input type="checkbox" id="set-sync"><span>Synchronized scrolling</span></label>
+      <label class="switch"><input type="checkbox" id="set-remember"><span>Remember documents in this browser</span></label>
+      <p class="settings-note" id="remember-note">Off: closing the browser tab erases everything. Turn it on only on your personal computer.</p>
+      <hr>
+      <button type="button" class="btn btn-danger btn-block" id="clear-all">Clear everything</button>
+      <p class="settings-note">Closes all documents and removes them from memory and browser storage.</p>
+      <hr>
+      <p class="settings-note">All documents are processed only in your browser. The site has no analytics and never contacts third-party servers.</p>
+    </div>
+
+    <div id="heading-menu" class="popover menu" role="menu" hidden></div>
+
+    <input type="file" id="file-input" multiple hidden accept=".md,.markdown,.mdown,.mkd,.mkdn,.mdx,.txt,image/*,audio/*,video/*">
+    <input type="file" id="folder-input" webkitdirectory multiple hidden>
+    <div id="toasts" class="toasts" aria-live="polite"></div>
+  </body>
+</html>
