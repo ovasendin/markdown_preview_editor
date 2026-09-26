@@ -1,4 +1,4 @@
-# Serves the site on http://localhost:8080. Put it behind your HTTPS reverse
+# Serves the site on http://localhost:PORT (default 8080, e.g. PORT=3000 docker compose ...). Put it behind your HTTPS reverse
 # proxy (or use deploy/Caddyfile) before exposing it to the internet.
 services:
   markdown-preview-editor:
@@ -6,7 +6,7 @@ services:
       context: ..
       dockerfile: deploy/Dockerfile
     ports:
-      - "8080:80"
+      - "${PORT:-8080}:80"
     restart: unless-stopped
     read_only: true
     tmpfs:

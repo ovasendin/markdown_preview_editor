@@ -4,6 +4,8 @@
 
 **A self-hosted Markdown editor and live previewer where your documents never leave the browser.**
 
+### [Try it online →](https://ovasendin.github.io/markdown_preview_editor/)
+
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Tracking: none](https://img.shields.io/badge/tracking-none-brightgreen.svg)
 ![Static site](https://img.shields.io/badge/hosting-any%20static%20host-informational.svg)
@@ -37,8 +39,8 @@ A static website you host yourself. Everything is processed locally in the brows
 Or build it yourself with `npm ci && npm run build`, then choose how to serve it:
 
 - **Your website** — extract `release/markdown-preview-editor-site.tar.gz` (or `.zip`) into your site's folder on any static hosting. The included `.htaccess` enables HTTPS and security headers on Apache/LiteSpeed.
-- **Docker** — `docker compose -f deploy/docker-compose.yml up -d --build`, then open http://localhost:8080.
-- **nginx** — copy `dist/` to the web root and use [deploy/nginx.conf](deploy/nginx.conf).
+- **Docker** — `PORT=8080 docker compose -f deploy/docker-compose.yml up -d --build` (pick any free port), then open `http://localhost:PORT`.
+- **nginx** — copy `dist/` to the web root and use `deploy/nginx.conf`.
 - **Caddy** — copy `dist/` to `/srv` and run `SITE_ADDRESS=your.domain caddy run --config deploy/Caddyfile`.
 - **Locally** — `npm run dev` and open the printed address.
 
