@@ -2,11 +2,12 @@
 import { EditorSelection, type ChangeSpec, type SelectionRange } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
 import { SlugRegistry } from '../markdown/slug';
+import { t } from '../i18n';
 
 type Cmd = (view: EditorView) => boolean;
 
 /** Wraps each selection in `before…after`, or unwraps it if already wrapped. */
-export function wrapInline(before: string, after = before, placeholder = 'text'): Cmd {
+export function wrapInline(before: string, after = before, placeholder?: string): Cmd {
   return (view) => {
     const { state } = view;
     const tr = state.changeByRange((range) => {
@@ -26,7 +27,7 @@ export function wrapInline(before: string, after = before, placeholder = 'text')
         const inner = text.slice(before.length, text.length - after.length);
         return { changes: { from: range.from, to: range.to, insert: inner }, range: EditorSelection.range(range.from, range.from + inner.length) };
       }
-      const content = range.empty ? placeholder : text;
+      const content = range.empty ? (placeholder ?? t('snip.text')) : text;
       return {
         changes: { from: range.from, to: range.to, insert: before + content + after },
         range: EditorSelection.range(range.from + before.length, range.from + before.length + content.length),
@@ -149,7 +150,7 @@ export function insertLink(image = false): Cmd {
       insert = `${bang}[](${text})`;
       sel = [range.from + bang.length + 1, range.from + bang.length + 1];
     } else {
-      const label = text || (image ? 'description' : 'link text');
+      const label = text || t(image ? 'snip.description' : 'snip.linkText');
       const url = image ? 'img/picture.png' : 'https://';
       insert = `${bang}[${label}](${url})`;
       const urlStart = range.from + bang.length + label.length + 3;
@@ -161,27 +162,30 @@ export function insertLink(image = false): Cmd {
   };
 }
 
-export const insertTable = insertBlock(
-  '| Column 1 | Column 2 | Column 3 |\n| --- | --- | --- |\n| $SEL$ |  |  |\n|  |  |  |',
-  'cell',
-);
+// Templates are built at call time so inserted text follows the current language.
+export const insertTable: Cmd = (view) => {
+  const [a, b, c] = [1, 2, 3].map((n) => t('snip.column', { n }));
+  return insertBlock(`| ${a} | ${b} | ${c} |\n| --- | --- | --- |\n| $SEL$ |  |  |\n|  |  |  |`, t('snip.cell'))(view);
+};
 
-export const insertCodeBlock = insertBlock('```\n$SEL$\n```', 'code');
+export const insertCodeBlock: Cmd = (view) => insertBlock('```\n$SEL$\n```', t('snip.code'))(view);
 
 export const insertRule = insertBlock('---');
 
-export const insertDetails = insertBlock('<details>\n<summary>Title</summary>\n\n$SEL$\n\n</details>', 'Hidden content');
+export const insertDetails: Cmd = (view) =>
+  insertBlock(`<details>\n<summary>${t('snip.detailsTitle')}</summary>\n\n$SEL$\n\n</details>`, t('snip.detailsBody'))(view);
 
 export const insertMath = insertBlock('$$\n$SEL$\n$$', 'E = mc^2');
 
-export const insertMermaid = insertBlock(
-  '```mermaid\nflowchart LR\n    A[Start] --> B{Condition}\n    B -->|Yes| C[Result]\n    B -->|No| D[Other path]\n```',
-);
+export const insertMermaid: Cmd = (view) =>
+  insertBlock(
+    `\`\`\`mermaid\nflowchart LR\n    A[${t('snip.mmdStart')}] --> B{${t('snip.mmdCondition')}}\n    B -->|${t('snip.mmdYes')}| C[${t('snip.mmdResult')}]\n    B -->|${t('snip.mmdNo')}| D[${t('snip.mmdOther')}]\n\`\`\``,
+  )(view);
 
 export function insertAlert(kind: 'NOTE' | 'TIP' | 'IMPORTANT' | 'WARNING' | 'CAUTION'): Cmd {
   return (view) => {
     const range = view.state.selection.main;
-    const text = view.state.sliceDoc(range.from, range.to) || 'Message text';
+    const text = view.state.sliceDoc(range.from, range.to) || t('snip.alertText');
     const quoted = text.split('\n').map((l) => `> ${l}`).join('\n');
     return insertBlock(`> [!${kind}]\n${quoted}`)(view);
   };
@@ -235,5 +239,5 @@ export function buildToc(source: string): string {
 export function insertToc(view: EditorView): boolean {
   const toc = buildToc(view.state.doc.toString());
   if (!toc) return false;
-  return insertBlock(`**Contents**\n\n${toc}`)(view);
+  return insertBlock(`**${t('snip.contents')}**\n\n${toc}`)(view);
 }

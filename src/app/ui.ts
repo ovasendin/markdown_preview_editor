@@ -1,4 +1,5 @@
 import { createElement, type IconNode } from 'lucide';
+import { t } from '../i18n';
 
 export function icon(node: IconNode, size = 18): SVGElement {
   const svg = createElement(node);
@@ -57,7 +58,7 @@ export function confirmDialog(opts: ConfirmOptions): Promise<boolean> {
   return new Promise((resolve) => {
     const dialog = h('dialog', { class: 'dialog' });
     const okBtn = h('button', { class: `btn ${opts.danger ? 'btn-danger' : 'btn-primary'}`, value: 'ok' }, opts.ok);
-    const cancelBtn = h('button', { class: 'btn', value: 'cancel' }, opts.cancel ?? 'Cancel');
+    const cancelBtn = h('button', { class: 'btn', value: 'cancel' }, opts.cancel ?? t('dialog.cancel'));
     dialog.append(
       h('h2', { class: 'dialog-title' }, opts.title),
       h('div', { class: 'dialog-body' }, ...opts.body),

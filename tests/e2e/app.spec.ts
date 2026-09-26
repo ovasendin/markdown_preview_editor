@@ -159,3 +159,46 @@ test('scroll sync follows the editor', async ({ page }) => {
   const n = (s: string) => Number(s.match(/\d+/)?.[0] ?? -1);
   expect(Math.abs(n(editorTop) - n(previewTop))).toBeLessThanOrEqual(1);
 });
+
+test.describe('languages', () => {
+  test.use({ locale: 'de-DE' });
+
+  test('detects the browser language, loads it lazily and can switch languages', async ({ page }) => {
+    const chunks: string[] = [];
+    page.on('request', (r) => chunks.push(r.url()));
+    await page.goto('/');
+    await expect(page.locator('#protection-btn')).toContainText('Vollständiger Schutz');
+    await expect(page.locator('.tab.active .tab-name')).toHaveText('Willkommen.md');
+    await expect(preview(page).locator('h2').first()).toHaveText('Funktionen');
+    expect(chunks.some((u) => /\/assets\/de-[\w-]+\.js$/.test(u))).toBe(true);
+    expect(chunks.some((u) => /\/assets\/ja-[\w-]+\.js$/.test(u))).toBe(false);
+    expect(await page.evaluate(() => document.documentElement.lang)).toBe('de');
+
+    await page.locator('#settings-btn').click();
+    await page.locator('#set-lang').selectOption('ja');
+    await expect(page.locator('#protection-btn')).toContainText('完全保護');
+    await expect(page.getByRole('button', { name: '太字 (Ctrl+B)' })).toBeVisible();
+    // The untouched welcome document follows the language.
+    await expect(page.locator('.tab.active .tab-name')).toHaveText('ようこそ.md');
+    expect(await page.evaluate(() => document.documentElement.lang)).toBe('ja');
+
+    // The choice is remembered across reloads.
+    await page.reload();
+    await expect(page.locator('#protection-btn')).toContainText('完全保護');
+
+    await page.locator('#settings-btn').click();
+    await page.locator('#set-lang').selectOption('');
+    await expect(page.locator('#protection-btn')).toContainText('Vollständiger Schutz');
+    for (const u of chunks) expect(u.startsWith('http://localhost:4173/')).toBe(true);
+  });
+
+  test('switching language keeps edited documents intact', async ({ page }) => {
+    await page.goto('/');
+    await openDoc(page, '# Mein Text', [], 'notiz.md');
+    await page.locator('#settings-btn').click();
+    await page.locator('#set-lang').selectOption('fr');
+    await expect(page.locator('#protection-btn')).toContainText('Protection totale');
+    await expect(page.locator('.tab.active .tab-name')).toHaveText('notiz.md');
+    expect(await editorText(page)).toBe('# Mein Text');
+  });
+});

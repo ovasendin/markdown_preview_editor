@@ -2,6 +2,7 @@
 // the browser — no upload of any kind exists in this application.
 import { extOf, mediaCategory } from '../security/file-check';
 import { normalizePath } from './paths';
+import { t } from '../i18n';
 
 export const TEXT_EXT = ['md', 'markdown', 'mdown', 'mkd', 'mkdn', 'mdx', 'txt'];
 const MAX_TEXT_BYTES = 20 * 1024 * 1024;
@@ -44,9 +45,9 @@ export function looksBinary(buffer: ArrayBuffer): boolean {
 }
 
 export async function readTextFile(file: File): Promise<DecodedText> {
-  if (file.size > MAX_TEXT_BYTES) throw new Error(`File "${file.name}" is too large (over 20 MB)`);
+  if (file.size > MAX_TEXT_BYTES) throw new Error(t('files.tooLarge', { name: file.name }));
   const buffer = await file.arrayBuffer();
-  if (looksBinary(buffer)) throw new Error(`File "${file.name}" does not look like a text file`);
+  if (looksBinary(buffer)) throw new Error(t('files.notText', { name: file.name }));
   return decodeText(buffer);
 }
 

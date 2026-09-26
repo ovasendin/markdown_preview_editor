@@ -21,28 +21,31 @@
         </div>
         <div class="topbar-group" id="file-actions"></div>
         <div class="spacer"></div>
-        <div class="segmented" id="view-mode" role="radiogroup" aria-label="View mode"></div>
+        <div class="segmented" id="view-mode" role="radiogroup" aria-label="View mode" data-i18n-aria="header.viewMode"></div>
         <button type="button" id="protection-btn" class="protection-btn"></button>
         <button type="button" id="theme-btn" class="icon-btn" title="Toggle theme"></button>
-        <button type="button" id="settings-btn" class="icon-btn" title="Settings"></button>
+        <button type="button" id="settings-btn" class="icon-btn" title="Settings" data-i18n-title="settings.title"></button>
       </header>
 
       <main class="workspace" id="workspace" data-view="both">
-        <section class="pane editor-pane" id="editor-pane" aria-label="Editor">
+        <section class="pane editor-pane" id="editor-pane" aria-label="Editor" data-i18n-aria="pane.editor">
           <div class="tabs" id="tabs" role="tablist"></div>
-          <div class="toolbar" id="toolbar" role="toolbar" aria-label="Formatting"></div>
-          <div class="toolbar toolbar-advanced" id="toolbar-advanced" role="toolbar" aria-label="Advanced editor" hidden></div>
+          <div class="toolbar" id="toolbar" role="toolbar" aria-label="Formatting" data-i18n-aria="toolbar.formatting"></div>
+          <div class="toolbar toolbar-advanced" id="toolbar-advanced" role="toolbar" aria-label="Advanced editor" data-i18n-aria="tb.advanced" hidden></div>
           <div class="editor-host" id="editor-host"></div>
           <div class="drop-overlay" id="drop-overlay" hidden>
             <div class="drop-card">
               <div class="drop-icon" id="drop-icon"></div>
-              <div class="drop-title">Drop to open</div>
-              <div class="drop-hint">.md, .txt, images, audio, video or a whole folder.<br>Files are read only in your browser and are never uploaded.</div>
+              <div class="drop-title" data-i18n="drop.title">Drop to open</div>
+              <div class="drop-hint">
+                <span data-i18n="drop.hint1">.md, .txt, images, audio, video or a whole folder.</span><br>
+                <span data-i18n="drop.hint2">Files are read only in your browser and are never uploaded.</span>
+              </div>
             </div>
           </div>
         </section>
-        <div class="resizer" id="resizer" role="separator" aria-orientation="vertical" aria-label="Resize panes" tabindex="0"></div>
-        <section class="pane preview-pane" id="preview-pane" aria-label="Preview">
+        <div class="resizer" id="resizer" role="separator" aria-orientation="vertical" aria-label="Resize panes" data-i18n-aria="pane.resize" tabindex="0"></div>
+        <section class="pane preview-pane" id="preview-pane" aria-label="Preview" data-i18n-aria="pane.preview">
           <div class="preview-host" id="preview-host"></div>
         </section>
       </main>
@@ -52,62 +55,66 @@
         <div class="status-right">
           <button type="button" class="status-issues" id="status-issues" hidden></button>
           <span class="status-encoding" id="status-encoding"></span>
-          <span class="status-private" id="status-private"></span>
+          <span class="status-private" id="status-private" data-i18n-title="status.privateTitle"><span class="status-private-text" data-i18n="status.private">Only in your browser</span></span>
         </div>
       </footer>
     </div>
 
-    <div id="protection-panel" class="popover protection-panel" role="dialog" aria-label="Protection" hidden>
+    <div id="protection-panel" class="popover protection-panel" role="dialog" aria-label="Protection" data-i18n-aria="prot.panel" hidden>
       <label class="check check-main">
         <input type="checkbox" id="prot-full" checked>
         <span class="check-box" aria-hidden="true"></span>
         <span class="check-text">
-          <span class="check-title">Full protection</span>
-          <span class="check-desc">The document cannot access the network: external links are inactive; external images, audio and video are not loaded.</span>
+          <span class="check-title" data-i18n="prot.full">Full protection</span>
+          <span class="check-desc" data-i18n="prot.fullDesc"></span>
         </span>
       </label>
-      <div class="perm-title">Permissions</div>
+      <div class="perm-title" data-i18n="prot.permissions">Permissions</div>
       <label class="check">
         <input type="checkbox" id="prot-links">
         <span class="check-box" aria-hidden="true"></span>
         <span class="check-text">
-          <span class="check-title">Allow links</span>
-          <span class="check-desc">Open in a new tab without revealing this page's address. Suspicious ones only after confirmation.</span>
+          <span class="check-title" data-i18n="prot.links">Allow links</span>
+          <span class="check-desc" data-i18n="prot.linksDesc"></span>
         </span>
       </label>
       <label class="check">
         <input type="checkbox" id="prot-images">
         <span class="check-box" aria-hidden="true"></span>
         <span class="check-text">
-          <span class="check-title">Allow external images</span>
-          <span class="check-desc">The image server will see your IP address and when you opened the document.</span>
+          <span class="check-title" data-i18n="prot.images">Allow external images</span>
+          <span class="check-desc" data-i18n="prot.imagesDesc"></span>
         </span>
       </label>
       <label class="check">
         <input type="checkbox" id="prot-media">
         <span class="check-box" aria-hidden="true"></span>
         <span class="check-text">
-          <span class="check-title">Allow external audio &amp; video</span>
-          <span class="check-desc">Standard player controls, never autoplay.</span>
+          <span class="check-title" data-i18n="prot.media">Allow external audio &amp; video</span>
+          <span class="check-desc" data-i18n="prot.mediaDesc"></span>
         </span>
       </label>
       <div class="prot-note">
-        <strong>Lightweight threat check.</strong> Links and media are also checked with heuristics: phishing tricks, look-alike domains, executables, local network addresses. Dangerous items are always blocked. This is not an antivirus.
+        <strong data-i18n="prot.checkTitle">Lightweight threat check.</strong>
+        <span data-i18n="prot.checkText"></span>
       </div>
-      <div class="prot-note prot-note-muted">
-        Images and media dropped together with a document are always shown — they need no network. Permissions reset when the page is reloaded.
-      </div>
+      <div class="prot-note prot-note-muted" data-i18n="prot.localNote"></div>
     </div>
 
-    <div id="settings-panel" class="popover settings-panel" role="dialog" aria-label="Settings" hidden>
-      <label class="switch"><input type="checkbox" id="set-sync"><span>Synchronized scrolling</span></label>
-      <label class="switch"><input type="checkbox" id="set-remember"><span>Remember documents in this browser</span></label>
-      <p class="settings-note" id="remember-note">Off: closing the browser tab erases everything. Turn it on only on your personal computer.</p>
+    <div id="settings-panel" class="popover settings-panel" role="dialog" aria-label="Settings" data-i18n-aria="settings.title" hidden>
+      <label class="select-row">
+        <span data-i18n="settings.language">Language</span>
+        <select id="set-lang"></select>
+      </label>
       <hr>
-      <button type="button" class="btn btn-danger btn-block" id="clear-all">Clear everything</button>
-      <p class="settings-note">Closes all documents and removes them from memory and browser storage.</p>
+      <label class="switch"><input type="checkbox" id="set-sync"><span data-i18n="settings.sync">Synchronized scrolling</span></label>
+      <label class="switch"><input type="checkbox" id="set-remember"><span data-i18n="settings.remember">Remember documents in this browser</span></label>
+      <p class="settings-note" id="remember-note"></p>
       <hr>
-      <p class="settings-note">All documents are processed only in your browser. The site has no analytics and never contacts third-party servers.</p>
+      <button type="button" class="btn btn-danger btn-block" id="clear-all" data-i18n="settings.clear">Clear everything</button>
+      <p class="settings-note" data-i18n="settings.clearNote"></p>
+      <hr>
+      <p class="settings-note" data-i18n="settings.privacy"></p>
     </div>
 
     <div id="heading-menu" class="popover menu" role="menu" hidden></div>

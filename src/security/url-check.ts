@@ -5,6 +5,7 @@
 import { parse as parseDomain } from 'tldts';
 import ipaddr from 'ipaddr.js';
 import { toUnicodeHost } from './punycode';
+import { t } from '../i18n';
 
 export type Risk = 'ok' | 'warn' | 'danger';
 export type UrlKind = 'link' | 'image' | 'media';
@@ -115,15 +116,15 @@ export function checkUrl(raw: string, kind: UrlKind, linkText?: string): UrlVerd
   const trimmed = raw.trim();
 
   if (BIDI_CHARS.test(trimmed)) {
-    flag('danger', 'The address contains invisible text-direction characters — a trick to disguise file names');
+    flag('danger', t('url.bidi'));
   }
   if (CONTROL_CHARS.test(trimmed)) {
-    flag('danger', 'The address contains control characters — a trick to bypass filters');
+    flag('danger', t('url.control'));
   }
 
   if (/^data:/i.test(trimmed)) {
     const ok = kind === 'image' ? SAFE_IMAGE_DATA.test(trimmed) : kind === 'media' ? SAFE_MEDIA_DATA.test(trimmed) : false;
-    if (!ok) flag('danger', 'Inline data (data:) of this type may contain executable code');
+    if (!ok) flag('danger', t('url.data'));
     return { risk, reasons, display: trimmed.slice(0, 60) + (trimmed.length > 60 ? '…' : ''), network: false };
   }
 
@@ -131,14 +132,14 @@ export function checkUrl(raw: string, kind: UrlKind, linkText?: string): UrlVerd
   try {
     url = new URL(trimmed.startsWith('//') ? `https:${trimmed}` : trimmed);
   } catch {
-    flag('danger', 'Invalid address');
+    flag('danger', t('url.invalid'));
     return { risk, reasons, display: trimmed, network: false };
   }
 
   const scheme = url.protocol.replace(':', '').toLowerCase();
   const allowedSchemes = kind === 'link' ? ['http', 'https', 'mailto', 'tel'] : ['http', 'https'];
   if (!allowedSchemes.includes(scheme)) {
-    flag('danger', `Disallowed address type "${scheme}:" — it can run code or open local files`);
+    flag('danger', t('url.scheme', { scheme }));
     return { risk, reasons, display: trimmed, network: false };
   }
   if (scheme === 'mailto' || scheme === 'tel') {
@@ -150,18 +151,18 @@ export function checkUrl(raw: string, kind: UrlKind, linkText?: string): UrlVerd
   const display = url.href.replace(host, unicodeHost);
 
   if (url.username || url.password) {
-    flag('danger', 'The address hides a login/password (user@host) — a classic phishing trick: the real site is the part after "@"');
+    flag('danger', t('url.credentials'));
   }
 
   const ipClass = classifyIp(host);
   if (ipClass === 'local' || (ipClass === 'none' && isLocalHostname(host))) {
     if (kind === 'link') {
-      flag('warn', 'Local network address (router, NAS, localhost)');
+      flag('warn', t('url.localLink'));
     } else {
-      flag('danger', 'Loading from the local network is forbidden: the document could probe devices on your network');
+      flag('danger', t('url.localMedia'));
     }
   } else if (ipClass === 'public') {
-    flag('warn', 'IP address instead of a domain name');
+    flag('warn', t('url.ip'));
   }
 
   if (ipClass === 'none' && !isLocalHostname(host)) {
@@ -170,56 +171,56 @@ export function checkUrl(raw: string, kind: UrlKind, linkText?: string): UrlVerd
     const tld = toUnicodeHost(labels[labels.length - 1]).toLowerCase();
 
     if (!info.isIcann && !info.isPrivate) {
-      flag('warn', `Unknown top-level domain ".${tld}"`);
+      flag('warn', t('url.unknownTld', { tld }));
     } else if (SUSPICIOUS_TLD.has(tld)) {
-      flag('warn', `The ".${tld}" domain is frequently used for scams`);
+      flag('warn', t('url.scamTld', { tld }));
     }
 
     if (host.includes('xn--')) {
       const mixed = labels.some((l) => scriptsOf(toUnicodeHost(l)).size > 1);
       const nativeTld = IDN_NATIVE_TLDS.has(tld);
       if (mixed) {
-        flag('warn', `The domain "${unicodeHost}" mixes alphabets — possibly imitating a well-known site`);
+        flag('warn', t('url.mixed', { host: unicodeHost }));
       } else if (!nativeTld) {
-        flag('warn', `Internationalized domain "${unicodeHost}" — make sure it is not a look-alike of another address`);
+        flag('warn', t('url.idn', { host: unicodeHost }));
       }
     }
 
     if (info.domain && SHORTENERS.has(info.domain.toLowerCase())) {
-      flag('warn', 'URL shortener — the real destination is hidden');
+      flag('warn', t('url.shortener'));
     }
 
     const subdomains = info.subdomain ? info.subdomain.split('.').filter(Boolean).length : 0;
-    if (subdomains >= 4) flag('warn', 'Too many subdomains — a trick to disguise the real address');
+    if (subdomains >= 4) flag('warn', t('url.subdomains'));
   }
 
   if (url.port && url.port !== '80' && url.port !== '443') {
-    flag('warn', `Non-standard port ${url.port}`);
+    flag('warn', t('url.port', { port: url.port }));
   }
   if (scheme === 'http') {
-    flag('warn', 'Unencrypted connection (http://) — content can be altered in transit');
+    flag('warn', t('url.http'));
   }
 
   const lastSegment = decodeSafe(url.pathname.split('/').pop() ?? '');
   const ext = lastSegment.includes('.') ? lastSegment.split('.').pop()!.toLowerCase() : '';
   if (DOUBLE_EXT.test(lastSegment)) {
-    flag('danger', `Double extension "${lastSegment}" — an executable disguised as a document`);
+    flag('danger', t('url.doubleExt', { name: lastSegment }));
   } else if (EXECUTABLE_EXT.has(ext)) {
-    flag(kind === 'link' ? 'warn' : 'danger', `Points to an executable or a macro-enabled document (.${ext})`);
+    flag(kind === 'link' ? 'warn' : 'danger', t('url.executable', { ext }));
   }
 
-  if (trimmed.length > 2000) flag('warn', 'Very long address');
+  if (trimmed.length > 2000) flag('warn', t('url.long'));
   // Percent-encoding plain ASCII letters has no legitimate purpose; non-ASCII
   // (e.g. Cyrillic paths) is always encoded and therefore not counted.
   const asciiEncoded = (url.pathname + url.search).match(/%(?!20)[2-7][0-9a-f]/gi)?.length ?? 0;
   if (asciiEncoded > 10) {
-    flag('warn', 'Heavily encoded address — may be hiding its content');
+    flag('warn', t('url.encoded'));
   }
 
   if (kind === 'link' && linkText) {
     const shownHost = linkTextHost(linkText);
     if (shownHost && registrable(shownHost) !== registrable(host)) {
-      flag('warn', `The link text shows "${shownHost}" but it leads to "${unicodeHost}"`);
+      flag('warn', t('url.textMismatch', { shown: shownHost, host: unicodeHost }));
     }
   }
 

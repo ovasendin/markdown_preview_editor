@@ -6,6 +6,7 @@ import hlLight from 'highlight.js/styles/github.min.css?raw';
 import hlDark from 'highlight.js/styles/github-dark.min.css?raw';
 import previewCss from '../styles/preview.css?raw';
 import { sanitizeForExport, type Protection } from '../markdown/pipeline';
+import { locale } from '../i18n';
 
 const escapeHtml = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
@@ -47,7 +48,7 @@ export async function buildStandaloneHtml(
   const dark = theme === 'dark';
 
   return `<!doctype html>
-<html lang="en" data-theme="${theme}">
+<html lang="${locale()}" data-theme="${theme}">
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="${csp}">

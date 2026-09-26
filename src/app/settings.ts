@@ -10,6 +10,8 @@ export interface Settings {
   advanced: boolean;
   lineNumbers: boolean;
   wrap: boolean;
+  /** Interface language; null follows the browser. */
+  lang: string | null;
 }
 
 const KEY = 'mpe:settings';
@@ -24,6 +26,7 @@ const DEFAULTS: Settings = {
   advanced: false,
   lineNumbers: false,
   wrap: true,
+  lang: null,
 };
 
 /** localStorage can throw (private mode, blocked storage); never let that break the app. */
@@ -64,6 +67,7 @@ function load(): Settings {
     const s = { ...DEFAULTS, ...parsed };
     if (!['editor', 'both', 'preview'].includes(s.view)) s.view = 'both';
     if (s.theme !== 'light' && s.theme !== 'dark') s.theme = null;
+    if (typeof s.lang !== 'string') s.lang = null;
     s.split = Math.min(80, Math.max(20, Number(s.split) || 50));
     return s;
   } catch {

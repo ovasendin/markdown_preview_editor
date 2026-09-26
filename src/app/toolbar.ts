@@ -14,6 +14,7 @@ import {
 } from './commands';
 import { h, icon, toast, closePopover } from './ui';
 import { settings, saveSettings } from './settings';
+import { t } from '../i18n';
 
 type Run = (view: EditorView) => boolean;
 
@@ -33,8 +34,11 @@ interface ToolbarHosts {
   onAdvancedToggle(open: boolean): void;
 }
 
+/** Builds (or rebuilds, e.g. after a language change) both toolbar rows. */
 export function buildToolbar(editor: Editor, hosts: ToolbarHosts): void {
   const view = editor.view;
+  hosts.main.replaceChildren();
+  hosts.advanced.replaceChildren();
 
   const button = (title: string, ic: IconNode, run: () => void, extra: Record<string, string> = {}) => {
     const b = h('button', { type: 'button', class: 'tool', title, 'aria-label': title, ...extra }, icon(ic, 17));
@@ -75,9 +79,9 @@ export function buildToolbar(editor: Editor, hosts: ToolbarHosts): void {
   // ---------- main row: the most common Markdown formatting
   const advancedToggle = h(
     'button',
-    { type: 'button', class: 'tool tool-advanced-toggle', 'aria-expanded': String(hosts.advancedOpen), 'aria-controls': 'toolbar-advanced', title: 'Advanced editor' },
+    { type: 'button', class: 'tool tool-advanced-toggle', 'aria-expanded': String(hosts.advancedOpen), 'aria-controls': 'toolbar-advanced', title: t('tb.advanced') },
     icon(SlidersHorizontal, 16),
-    h('span', { class: 'tool-text' }, 'Advanced editor'),
+    h('span', { class: 'tool-text' }, t('tb.advanced')),
     icon(ChevronDown, 14),
   );
   advancedToggle.addEventListener('click', () => {
@@ -89,31 +93,31 @@ export function buildToolbar(editor: Editor, hosts: ToolbarHosts): void {
   hosts.advanced.hidden = !hosts.advancedOpen;
 
   hosts.main.append(
-    cmd('Undo (Ctrl+Z)', Undo2, undo),
-    cmd('Redo (Ctrl+Y)', Redo2, redo),
+    cmd(t('tb.undo'), Undo2, undo),
+    cmd(t('tb.redo'), Redo2, redo),
     sep(),
-    menu('Heading', Heading, [
-      { label: 'Normal text', icon: Pilcrow, run: setHeading(0) },
-      { label: 'Heading 1', icon: Heading1, run: setHeading(1) },
-      { label: 'Heading 2', icon: Heading2, run: setHeading(2) },
-      { label: 'Heading 3', icon: Heading3, run: setHeading(3) },
+    menu(t('tb.heading'), Heading, [
+      { label: t('tb.normal'), icon: Pilcrow, run: setHeading(0) },
+      { label: t('tb.headingN', { n: 1 }), icon: Heading1, run: setHeading(1) },
+      { label: t('tb.headingN', { n: 2 }), icon: Heading2, run: setHeading(2) },
+      { label: t('tb.headingN', { n: 3 }), icon: Heading3, run: setHeading(3) },
     ]),
-    cmd('Bold (Ctrl+B)', Bold, wrapInline('**')),
-    cmd('Italic (Ctrl+I)', Italic, wrapInline('*')),
-    cmd('Strikethrough', Strikethrough, wrapInline('~~')),
+    cmd(t('tb.bold'), Bold, wrapInline('**')),
+    cmd(t('tb.italic'), Italic, wrapInline('*')),
+    cmd(t('tb.strike'), Strikethrough, wrapInline('~~')),
     sep(),
-    cmd('Link (Ctrl+K)', Link, insertLink()),
-    cmd('Image', Image, insertLink(true)),
+    cmd(t('tb.link'), Link, insertLink()),
+    cmd(t('tb.image'), Image, insertLink(true)),
     sep(),
-    cmd('Bulleted list', List, toggleLinePrefix('bullet')),
-    cmd('Numbered list', ListOrdered, toggleLinePrefix('ordered')),
-    cmd('Task list', ListTodo, toggleLinePrefix('task')),
-    cmd('Quote', Quote, toggleLinePrefix('quote')),
+    cmd(t('tb.bullets'), List, toggleLinePrefix('bullet')),
+    cmd(t('tb.numbers'), ListOrdered, toggleLinePrefix('ordered')),
+    cmd(t('tb.tasks'), ListTodo, toggleLinePrefix('task')),
+    cmd(t('tb.quote'), Quote, toggleLinePrefix('quote')),
     sep(),
-    cmd('Inline code', Code, wrapInline('`', '`', 'code')),
-    cmd('Code block', SquareCode, insertCodeBlock),
-    cmd('Table', Table, insertTable),
-    cmd('Horizontal rule', Minus, insertRule),
+    cmd(t('tb.code'), Code, (v) => wrapInline('`', '`', t('snip.code'))(v)),
+    cmd(t('tb.codeBlock'), SquareCode, insertCodeBlock),
+    cmd(t('tb.table'), Table, insertTable),
+    cmd(t('tb.rule'), Minus, insertRule),
     h('span', { class: 'tool-spacer' }),
     advancedToggle,
   );
@@ -137,40 +141,40 @@ export function buildToolbar(editor: Editor, hosts: ToolbarHosts): void {
   editor.setWrap(settings.wrap);
 
   hosts.advanced.append(
-    menu('Headings 4–6', Heading4, [
-      { label: 'Heading 4', icon: Heading4, run: setHeading(4) },
-      { label: 'Heading 5', icon: Heading5, run: setHeading(5) },
-      { label: 'Heading 6', icon: Heading6, run: setHeading(6) },
+    menu(t('tb.headings46'), Heading4, [
+      { label: t('tb.headingN', { n: 4 }), icon: Heading4, run: setHeading(4) },
+      { label: t('tb.headingN', { n: 5 }), icon: Heading5, run: setHeading(5) },
+      { label: t('tb.headingN', { n: 6 }), icon: Heading6, run: setHeading(6) },
     ]),
-    cmd('Highlight ==text==', Highlighter, wrapInline('==')),
-    cmd('Superscript x^2^', Superscript, wrapInline('^', '^', '2')),
-    cmd('Subscript H~2~O', Subscript, wrapInline('~', '~', '2')),
-    cmd('Keyboard key <kbd>', Keyboard, wrapInline('<kbd>', '</kbd>', 'Ctrl')),
+    cmd(t('tb.highlight'), Highlighter, wrapInline('==')),
+    cmd(t('tb.sup'), Superscript, wrapInline('^', '^', '2')),
+    cmd(t('tb.sub'), Subscript, wrapInline('~', '~', '2')),
+    cmd(t('tb.kbd'), Keyboard, wrapInline('<kbd>', '</kbd>', 'Ctrl')),
     sep(),
-    cmd('Footnote', Asterisk, insertFootnote),
-    cmd('Collapsible section (spoiler)', ListCollapse, insertDetails),
-    menu('Alert', MessageSquareWarning, [
-      { label: 'Note', run: insertAlert('NOTE') },
-      { label: 'Tip', run: insertAlert('TIP') },
-      { label: 'Important', run: insertAlert('IMPORTANT') },
-      { label: 'Warning', run: insertAlert('WARNING') },
-      { label: 'Caution', run: insertAlert('CAUTION') },
+    cmd(t('tb.footnote'), Asterisk, insertFootnote),
+    cmd(t('tb.details'), ListCollapse, insertDetails),
+    menu(t('tb.alert'), MessageSquareWarning, [
+      { label: t('tb.alertNote'), run: insertAlert('NOTE') },
+      { label: t('tb.alertTip'), run: insertAlert('TIP') },
+      { label: t('tb.alertImportant'), run: insertAlert('IMPORTANT') },
+      { label: t('tb.alertWarning'), run: insertAlert('WARNING') },
+      { label: t('tb.alertCaution'), run: insertAlert('CAUTION') },
     ]),
     sep(),
-    cmd('Math formula', Sigma, insertMath),
-    cmd('Mermaid diagram', Workflow, insertMermaid),
-    cmd('Table of contents', ListTree, withToast(insertToc, 'The document has no headings for a table of contents')),
+    cmd(t('tb.math'), Sigma, insertMath),
+    cmd(t('tb.mermaid'), Workflow, insertMermaid),
+    cmd(t('tb.toc'), ListTree, withToast(insertToc, t('tb.tocEmpty'))),
     sep(),
-    cmd('Indent', IndentIncrease, indentMore),
-    cmd('Outdent', IndentDecrease, indentLess),
-    cmd('Find and replace (Ctrl+F)', Search, openSearchPanel),
+    cmd(t('tb.indent'), IndentIncrease, indentMore),
+    cmd(t('tb.outdent'), IndentDecrease, indentLess),
+    cmd(t('tb.find'), Search, openSearchPanel),
     sep(),
-    toggle('Line numbers', Hash, () => settings.lineNumbers, (v) => {
+    toggle(t('tb.lineNumbers'), Hash, () => settings.lineNumbers, (v) => {
       settings.lineNumbers = v;
       editor.setLineNumbers(v);
       saveSettings();
     }),
-    toggle('Word wrap', WrapText, () => settings.wrap, (v) => {
+    toggle(t('tb.wrap'), WrapText, () => settings.wrap, (v) => {
       settings.wrap = v;
       editor.setWrap(v);
       saveSettings();

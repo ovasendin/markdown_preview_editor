@@ -13,6 +13,7 @@ import DOMPurify, { type Config } from 'dompurify';
 import { renderMarkdownToHtml } from './md';
 import { checkUrl, hasScheme, type Risk, type UrlVerdict } from '../security/url-check';
 import { mediaCategory, type FileVerdict, type MediaCategory } from '../security/file-check';
+import { t } from '../i18n';
 
 export interface Protection {
   links: boolean;
@@ -72,7 +73,7 @@ purify.addHook('afterSanitizeAttributes', (node) => {
   }
 });
 
-const MEDIA_WORD: Record<MediaCategory, string> = { image: 'image', audio: 'audio', video: 'video' };
+const mediaWord = (c: MediaCategory) => t(c === 'image' ? 'media.image' : c === 'audio' ? 'media.audio' : 'media.video');
 
 class Processor {
   readonly issues: Issue[] = [];
@@ -88,7 +89,7 @@ class Processor {
 
   private badge(risk: 'warn' | 'danger', reasons: string[]): HTMLElement {
     const b = this.el('span', `risk-badge risk-${risk}`, risk === 'danger' ? '⛔' : '⚠');
-    b.title = (risk === 'danger' ? 'Blocked (lightweight check):\n• ' : 'Suspicious (lightweight check):\n• ') + reasons.join('\n• ');
+    b.title = `${t(risk === 'danger' ? 'pv.badgeDanger' : 'pv.badgeWarn')}\n• ` + reasons.join('\n• ');
     return b;
   }
 
@@ -125,8 +126,8 @@ class Processor {
   private processEmbeds() {
     this.doc.querySelectorAll('iframe, object, embed, frame, portal').forEach((node) => {
       const src = node.getAttribute('src') ?? node.getAttribute('data') ?? '';
-      this.record('unsupported', 'embedded page', src, ['Embedding third-party pages and players is not supported']);
-      node.replaceWith(this.placeholder('embed', 'blocked', 'Embedded page not supported', src));
+      this.record('unsupported', t('pv.embed'), src, [t('pv.embedReason')]);
+      node.replaceWith(this.placeholder('embed', 'blocked', t('pv.embedTitle'), src));
     });
   }
 
@@ -153,20 +154,22 @@ class Processor {
    * element if it must not be loaded.
    */
   private resolveMedia(raw: string, category: MediaCategory): { url: string; badge?: HTMLElement } | { placeholder: HTMLElement } {
-    const word = MEDIA_WORD[category];
-    if (!raw) return { placeholder: this.placeholder(category, 'missing', `Empty ${word} reference`, '') };
+    const word = mediaWord(category);
+    if (!raw) return { placeholder: this.placeholder(category, 'missing', t('pv.empty'), '') };
 
     if (hasScheme(raw)) {
       const v: UrlVerdict = checkUrl(raw, category === 'image' ? 'image' : 'media');
       if (v.risk === 'danger') {
         this.record('danger', word, v.display, v.reasons);
-        return { placeholder: this.placeholder(category, 'danger', `Dangerous ${word} source blocked`, v.display, v.reasons) };
+        return { placeholder: this.placeholder(category, 'danger', t('pv.dangerSource'), v.display, v.reasons) };
       }
       if (v.network && !this.allowed(category)) {
         this.record('blocked', word, v.display, []);
-        const hint = category === 'image' ? '"Allow external images"' : '"Allow external audio & video"';
+        const title = category === 'image'
+          ? t('pv.blockedImage', { hint: t('prot.images') })
+          : t('pv.blockedMedia', { hint: t('prot.media') });
         return {
-          placeholder: this.placeholder(category, 'blocked', `External ${word} blocked — enable ${hint}`, v.display),
+          placeholder: this.placeholder(category, 'blocked', title, v.display),
         };
       }
       if (v.risk === 'warn') {
@@ -180,12 +183,12 @@ class Processor {
     if (!asset) {
       this.record('missing', word, raw, []);
       return {
-        placeholder: this.placeholder(category, 'missing', `Local file not found: ${raw}`, 'Drop it together with the document, or drop the whole folder'),
+        placeholder: this.placeholder(category, 'missing', t('pv.localMissing', { path: raw }), t('pv.localMissingHint')),
       };
     }
     if (asset.verdict.risk === 'danger') {
       this.record('danger', word, asset.name, asset.verdict.reasons);
-      return { placeholder: this.placeholder(category, 'danger', `File "${asset.name}" blocked`, '', asset.verdict.reasons) };
+      return { placeholder: this.placeholder(category, 'danger', t('pv.fileBlocked', { name: asset.name }), '', asset.verdict.reasons) };
     }
     if (asset.verdict.risk === 'warn') {
       this.record('warn', word, asset.name, asset.verdict.reasons);
@@ -225,7 +228,7 @@ class Processor {
     const sources = [...media.querySelectorAll('source')];
     const candidates = media.hasAttribute('src') ? [media as Element] : sources;
     if (candidates.length === 0) {
-      media.replaceWith(this.placeholder(category, 'missing', `No ${MEDIA_WORD[category]} source`, ''));
+      media.replaceWith(this.placeholder(category, 'missing', t('pv.noSource'), ''));
       return;
     }
     let firstPlaceholder: HTMLElement | null = null;
@@ -267,38 +270,38 @@ class Processor {
           a.setAttribute('data-doc', docId);
           if (hash) a.setAttribute('data-hash', hash);
           a.classList.add('doc-link');
-          a.title = `Open document ${path}`;
+          a.title = t('pv.openDoc', { path });
           return;
         }
         const span = this.el('span', 'link-local');
         span.append(...a.childNodes);
-        span.title = `Local file "${raw}" is not open — drop it together with the document`;
+        span.title = t('pv.localLink', { path: raw });
         a.replaceWith(span);
         return;
       }
 
       const v = checkUrl(raw, 'link', a.textContent ?? '');
       if (v.risk === 'danger') {
-        this.record('danger', 'link', v.display, v.reasons);
+        this.record('danger', t('pv.link'), v.display, v.reasons);
         const span = this.el('span', 'link-blocked');
         span.append(...a.childNodes);
-        span.title = `Link blocked: ${v.display}`;
+        span.title = t('pv.linkBlocked', { url: v.display });
         a.replaceWith(span);
         span.after(this.badge('danger', v.reasons));
         return;
       }
       if (!this.ctx.protection.links && v.network) {
-        this.record('blocked', 'link', v.display, []);
+        this.record('blocked', t('pv.link'), v.display, []);
         const span = this.el('span', 'link-disabled');
         span.append(...a.childNodes);
-        span.title = `Links are disabled (Full protection): ${v.display}\nEnable "Allow links" to follow them.`;
+        span.title = t('pv.linksDisabled', { url: v.display, hint: t('prot.links') });
         a.replaceWith(span);
         return;
       }
       a.setAttribute('data-external', '1');
       a.title = v.display;
       if (v.risk === 'warn') {
-        this.record('warn', 'link', v.display, v.reasons);
+        this.record('warn', t('pv.link'), v.display, v.reasons);
         a.setAttribute('data-risk', 'warn');
         a.setAttribute('data-reasons', v.reasons.join('\n'));
         a.after(this.badge('warn', v.reasons));
@@ -338,14 +341,14 @@ async function renderMermaid(doc: Document, theme: 'light' | 'dark') {
         document.getElementById(`dmmd-${mermaidSeq}`)?.remove();
         const box = doc.createElement('div');
         box.className = 'mermaid-error';
-        box.textContent = `Diagram error: ${(err as Error)?.message ?? err}`;
+        box.textContent = t('pv.diagramError', { error: String((err as Error)?.message ?? err) });
         block.append(box);
         continue;
       }
     }
     const img = doc.createElement('img');
     img.className = 'mermaid-diagram';
-    img.alt = 'Diagram';
+    img.alt = t('pv.diagram');
     img.src = dataUrl;
     block.querySelector('.mermaid-src')?.replaceWith(img);
   }

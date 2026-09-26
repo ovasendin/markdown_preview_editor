@@ -11,6 +11,7 @@ import { languages } from '@codemirror/language-data';
 import { syntaxHighlighting, HighlightStyle, bracketMatching, indentOnInput } from '@codemirror/language';
 import { tags as t } from '@lezer/highlight';
 import { wrapInline, insertLink } from './commands';
+import { t as tr } from '../i18n';
 
 const mdHighlight = HighlightStyle.define([
   { tag: t.heading1, fontWeight: '700', fontSize: '1.3em', color: 'var(--cm-heading)' },
@@ -64,6 +65,7 @@ export class Editor {
   readonly view: EditorView;
   private lineNumbersC = new Compartment();
   private wrapC = new Compartment();
+  private labelsC = new Compartment();
   private showLineNumbers = false;
   private wrap = true;
   private states = new Map<string, EditorState>();
@@ -91,7 +93,7 @@ export class Editor {
       markdown({ base: markdownLanguage, codeLanguages: languages }),
       syntaxHighlighting(mdHighlight),
       baseTheme,
-      placeholder('Start writing Markdown or drop files here…'),
+      this.labelsC.of(this.labels()),
       this.lineNumbersC.of(this.showLineNumbers ? lineNumbers() : []),
       this.wrapC.of(this.wrap ? EditorView.lineWrapping : []),
       keymap.of([
@@ -107,8 +109,16 @@ export class Editor {
       EditorView.updateListener.of((u) => {
         if (u.docChanged) this.opts.onChange(u.state.doc.toString());
       }),
-      EditorView.contentAttributes.of({ 'aria-label': 'Markdown editor', spellcheck: 'true' }),
     ];
+  }
+
+  private labels(): Extension[] {
+    return [placeholder(tr('editor.placeholder')), EditorView.contentAttributes.of({ 'aria-label': tr('editor.aria'), spellcheck: 'true' })];
+  }
+
+  /** Re-applies translated placeholder and labels after a language change. */
+  relabel(): void {
+    this.view.dispatch({ effects: this.labelsC.reconfigure(this.labels()) });
   }
 
   private createState(text: string): EditorState {
@@ -127,6 +137,7 @@ export class Editor {
       effects: [
         this.lineNumbersC.reconfigure(this.showLineNumbers ? lineNumbers() : []),
         this.wrapC.reconfigure(this.wrap ? EditorView.lineWrapping : []),
+        this.labelsC.reconfigure(this.labels()),
       ],
     });
   }

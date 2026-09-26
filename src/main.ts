@@ -10,9 +10,9 @@ import { AssetStore } from './app/assets';
 import { collectDropped, collectPicked, isMedia, isTextDoc, readTextFile, type IncomingFile } from './app/files';
 import { basename, dirname, pathKey, resolveRef } from './app/paths';
 import { renderDocument, type Protection, type Issue } from './markdown/pipeline';
-import { SAMPLE, SAMPLE_NAME } from './app/sample';
 import { $, h, icon, toast, confirmDialog, bindPopover, showPopover, closePopover, download } from './app/ui';
 import { settings, saveSettings, storage } from './app/settings';
+import { t, setLocale, detectLocale, isLocale, locale, translateDom, LOCALES } from './i18n';
 
 // ---------------------------------------------------------------- state
 
@@ -25,6 +25,8 @@ interface Doc {
   encoding: string;
   /** Untouched sample or empty tab — replaced when files are opened. */
   pristine: boolean;
+  /** The welcome document; re-translated on language change while untouched. */
+  sample?: boolean;
 }
 
 const DOCS_KEY = 'mpe:docs';
@@ -50,7 +52,7 @@ function applyTheme(rerender = true) {
   document.documentElement.dataset.theme = theme;
   const btn = $('theme-btn');
   btn.replaceChildren(icon(theme === 'dark' ? Sun : Moon));
-  btn.title = theme === 'dark' ? 'Light theme' : 'Dark theme';
+  btn.title = t(theme === 'dark' ? 'theme.light' : 'theme.dark');
   btn.setAttribute('aria-label', btn.title);
   preview?.setTheme(theme);
   if (rerender && preview) scheduleRender(0);
@@ -83,7 +85,7 @@ const preview = new Preview($('preview-host'), {
   },
   onScroll: () => syncScroll('preview'),
   onKeydown: handleShortcut,
-  onDropAttempt: () => toast('Drop files onto the editor (left side of the window)', 'info'),
+  onDropAttempt: () => toast(t('drop.wrongPlace'), 'info'),
 });
 
 // ---------------------------------------------------------------- rendering
@@ -129,7 +131,7 @@ async function renderNow() {
     }
   } catch (err) {
     console.error(err);
-    toast(`Rendering error: ${(err as Error).message}`, 'error');
+    toast(t('render.error', { error: (err as Error).message }), 'error');
   }
 }
 
@@ -174,8 +176,8 @@ function activate(doc: Doc) {
 
 function untitledName(): string {
   let n = 1;
-  while (docs.some((d) => d.name === `Untitled ${n}.md`)) n++;
-  return `Untitled ${n}.md`;
+  while (docs.some((d) => d.name === t('tab.untitled', { n }))) n++;
+  return t('tab.untitled', { n });
 }
 
 function newDocument() {
@@ -187,9 +189,9 @@ function newDocument() {
 async function closeDoc(doc: Doc) {
   if (isDirty(doc) && !doc.pristine && doc.text.trim()) {
     const ok = await confirmDialog({
-      title: 'Close without saving?',
-      body: [`"${doc.name}" has unsaved changes. They will be lost.`],
-      ok: 'Close',
+      title: t('close.title'),
+      body: [t('close.body', { name: doc.name })],
+      ok: t('tab.close'),
       danger: true,
     });
     if (!ok) return;
@@ -219,7 +221,7 @@ function updateTabs() {
         title: doc.path,
       });
       const label = h('span', { class: 'tab-name' }, doc.name);
-      const close = h('button', { type: 'button', class: 'tab-close', 'aria-label': `Close ${doc.name}`, title: 'Close' }, icon(X, 14));
+      const close = h('button', { type: 'button', class: 'tab-close', 'aria-label': t('tab.closeNamed', { name: doc.name }), title: t('tab.close') }, icon(X, 14));
       tab.append(h('span', { class: 'tab-dot', 'aria-hidden': 'true' }), label, close);
       tab.addEventListener('click', () => activate(doc));
       tab.addEventListener('auxclick', (e) => e.button === 1 && closeDoc(doc));
@@ -233,7 +235,7 @@ function updateTabs() {
       return tab;
     }),
   );
-  const add = h('button', { type: 'button', class: 'tab-new', title: 'New document', 'aria-label': 'New document' }, icon(Plus, 16));
+  const add = h('button', { type: 'button', class: 'tab-new', title: t('tab.new'), 'aria-label': t('tab.new') }, icon(Plus, 16));
   add.addEventListener('click', newDocument);
   tabs.append(add);
   tabs.querySelector('.tab.active')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
@@ -244,33 +246,42 @@ function updateTabs() {
 
 function updateCounts() {
   const text = active.text;
-  const words = (text.match(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu) ?? []).length;
+  // Chinese and Japanese have no spaces between words: count each character.
+  const words = (text.match(/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]|[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu) ?? []).length;
   const minutes = Math.max(1, Math.round(words / 200));
-  $('status-counts').textContent =
-    `Words: ${words.toLocaleString('en-US')} · Characters: ${text.length.toLocaleString('en-US')} · Lines: ${editor.view.state.doc.lines.toLocaleString('en-US')} · ~${minutes} min read`;
+  const num = (n: number) => n.toLocaleString(locale());
+  $('status-counts').textContent = t('status.counts', {
+    words: num(words),
+    chars: num(text.length),
+    lines: num(editor.view.state.doc.lines),
+    minutes,
+  });
   $('status-encoding').textContent = active.encoding;
 }
 
-function updateIssues(stats: { blocked: number; warnings: number; dangers: number; missing: number }) {
+let lastStats = { blocked: 0, warnings: 0, dangers: 0, missing: 0 };
+
+function updateIssues(stats = lastStats) {
+  lastStats = stats;
   const btn = $('status-issues');
   const parts: string[] = [];
-  if (stats.blocked) parts.push(`Blocked by protection: ${stats.blocked}`);
-  if (stats.dangers) parts.push(`Dangerous: ${stats.dangers}`);
-  if (stats.warnings) parts.push(`Suspicious: ${stats.warnings}`);
-  if (stats.missing) parts.push(`Missing files: ${stats.missing}`);
+  if (stats.blocked) parts.push(t('status.blocked', { n: stats.blocked }));
+  if (stats.dangers) parts.push(t('status.dangers', { n: stats.dangers }));
+  if (stats.warnings) parts.push(t('status.warnings', { n: stats.warnings }));
+  if (stats.missing) parts.push(t('status.missing', { n: stats.missing }));
   btn.hidden = parts.length === 0;
   btn.className = `status-issues${stats.dangers ? ' has-danger' : stats.warnings ? ' has-warn' : ''}`;
   btn.replaceChildren(icon(stats.dangers || stats.warnings ? TriangleAlert : ShieldCheck, 14), parts.join(' · '));
-  btn.title = 'Show details';
+  btn.title = t('status.details');
 }
 
 function showIssues() {
   const labels: Record<Issue['risk'], string> = {
-    danger: 'Dangerous — blocked',
-    warn: 'Suspicious',
-    blocked: 'Blocked by protection mode',
-    missing: 'Local file not found',
-    unsupported: 'Not supported',
+    danger: t('issues.danger'),
+    warn: t('issues.warn'),
+    blocked: t('issues.blocked'),
+    missing: t('issues.missing'),
+    unsupported: t('issues.unsupported'),
     ok: 'OK',
   };
   const order: Issue['risk'][] = ['danger', 'warn', 'blocked', 'missing', 'unsupported'];
@@ -287,8 +298,8 @@ function showIssues() {
     }
     list.append(ul);
   }
-  list.append(h('p', { class: 'issues-note' }, 'This is a lightweight check: heuristics that run inside the browser, without sending addresses to any online service. It is not an antivirus.'));
-  confirmDialog({ title: 'External resources and threat check', body: [list], ok: 'Close', cancel: false });
+  list.append(h('p', { class: 'issues-note' }, t('issues.note')));
+  confirmDialog({ title: t('issues.title'), body: [list], ok: t('dialog.close'), cancel: false });
 }
 
 // ---------------------------------------------------------------- protection
@@ -305,10 +316,14 @@ function syncProtectionUi() {
   protFull.checked = full;
   for (const [k, input] of Object.entries(protInputs)) input.checked = protection[k as keyof Protection];
   const btn = $('protection-btn');
-  const allowed = [protection.links && 'links', protection.images && 'images', protection.media && 'audio & video'].filter(Boolean);
+  const allowed = [
+    protection.links && t('prot.listLinks'),
+    protection.images && t('prot.listImages'),
+    protection.media && t('prot.listMedia'),
+  ].filter(Boolean);
   btn.className = `protection-btn ${full ? 'is-full' : 'is-relaxed'}`;
-  btn.replaceChildren(icon(full ? ShieldCheck : ShieldAlert, 17), h('span', { class: 'protection-label' }, full ? 'Full protection' : 'Protection relaxed'));
-  btn.title = full ? 'Full protection: the document cannot access the network' : `Allowed: ${allowed.join(', ')}`;
+  btn.replaceChildren(icon(full ? ShieldCheck : ShieldAlert, 17), h('span', { class: 'protection-label' }, t(full ? 'prot.full' : 'prot.relaxed')));
+  btn.title = full ? t('prot.fullTooltip') : t('prot.allowed', { list: allowed.join(', ') });
   document.documentElement.dataset.protection = full ? 'full' : 'relaxed';
 }
 
@@ -324,7 +339,7 @@ protFull.addEventListener('change', () => {
   } else if (!protection.links && !protection.images && !protection.media) {
     // Unticking full protection alone does not grant anything; keep it on and explain.
     protFull.checked = true;
-    toast('To relax protection, enable one of the permissions below', 'info');
+    toast(t('prot.enableHint'), 'info');
     return;
   }
   applyProtection();
@@ -339,14 +354,14 @@ for (const [k, input] of Object.entries(protInputs)) {
 async function openExternal(url: string, risky: boolean, reasons: string[]) {
   if (risky) {
     const ok = await confirmDialog({
-      title: 'Suspicious link',
+      title: t('link.title'),
       body: [
-        h('p', {}, 'The lightweight check found warning signs:'),
+        h('p', {}, t('link.found')),
         h('ul', { class: 'issue-reasons' }, ...reasons.map((r) => h('li', {}, r))),
-        h('p', {}, 'Address: ', h('code', { class: 'issue-target' }, url)),
-        h('p', { class: 'muted' }, 'This is a heuristic, not an antivirus. Open it only if you trust the source.'),
+        h('p', {}, `${t('link.address')} `, h('code', { class: 'issue-target' }, url)),
+        h('p', { class: 'muted' }, t('link.note')),
       ],
-      ok: 'Open anyway',
+      ok: t('link.open'),
       danger: true,
     });
     if (!ok) return;
@@ -392,11 +407,11 @@ async function handleIncoming(files: IncomingFile[]) {
   }
 
   const parts: string[] = [];
-  if (opened.length) parts.push(`Documents opened: ${opened.length}`);
-  if (mediaFiles.length) parts.push(`media files: ${mediaFiles.length}`);
+  if (opened.length) parts.push(t('files.opened', { n: opened.length }));
+  if (mediaFiles.length) parts.push(t('files.media', { n: mediaFiles.length }));
   if (skipped.length) {
     const names = skipped.slice(0, 3).map((f) => f.file.name).join(', ');
-    parts.push(`skipped: ${skipped.length} (${names}${skipped.length > 3 ? '…' : ''})`);
+    parts.push(t('files.skipped', { n: skipped.length, names: names + (skipped.length > 3 ? '…' : '') }));
   }
   if (parts.length) toast(parts.join(' · '), skipped.length ? 'warn' : 'ok');
   for (const e of errors) toast(e, 'error', 6000);
@@ -459,7 +474,7 @@ function setupDragAndDrop() {
     e.stopPropagation();
     hide();
     const pending = collectDropped(e.dataTransfer!);
-    pending.then(handleIncoming).catch((err) => toast(`Could not read the files: ${err.message}`, 'error'));
+    pending.then(handleIncoming).catch((err) => toast(t('files.readError', { error: err.message }), 'error'));
   }, true);
 
   // Anywhere else: never let the browser navigate away to the dropped file.
@@ -472,7 +487,7 @@ function setupDragAndDrop() {
     if (!hasFiles(e)) return;
     e.preventDefault();
     hide();
-    if (!pane.contains(e.target as Node)) toast('Drop files onto the editor (left side of the window)', 'info');
+    if (!pane.contains(e.target as Node)) toast(t('drop.wrongPlace'), 'info');
   });
   window.addEventListener('dragend', hide);
 }
@@ -496,7 +511,7 @@ function saveActive() {
   active.savedText = active.text;
   active.pristine = false;
   updateTabs();
-  toast(`Saved: ${name} (to your browser's downloads folder)`, 'ok');
+  toast(t('save.done', { name }), 'ok');
 }
 
 async function exportHtml() {
@@ -505,7 +520,7 @@ async function exportHtml() {
   const title = active.name.replace(/\.[^.]+$/, '');
   const html = await buildStandaloneHtml(title, preview.content, effectiveTheme(), protection, (u) => assets.inlineBlobUrl(u));
   download(`${title}.html`, new Blob([html], { type: 'text/html;charset=utf-8' }));
-  toast(`Exported: ${title}.html`, 'ok');
+  toast(t('export.done', { name: `${title}.html` }), 'ok');
 }
 
 // ---------------------------------------------------------------- persistence (opt-in)
@@ -539,9 +554,9 @@ function restoreDocs(): boolean {
 
 async function clearAll() {
   const ok = await confirmDialog({
-    title: 'Clear everything?',
-    body: ['All open documents will be closed and removed from memory and from browser storage. Unsaved changes will be lost.'],
-    ok: 'Clear',
+    title: t('clear.title'),
+    body: [t('clear.body')],
+    ok: t('clear.ok'),
     danger: true,
   });
   if (!ok) return;
@@ -560,7 +575,7 @@ async function clearAll() {
   preview.setContent('');
   newDocument();
   closePopover();
-  toast('Everything cleared', 'ok');
+  toast(t('clear.done'), 'ok');
 }
 
 // ---------------------------------------------------------------- settings UI
@@ -571,9 +586,7 @@ const setRemember = $('set-remember') as HTMLInputElement;
 function syncSettingsUi() {
   setSync.checked = settings.sync;
   setRemember.checked = settings.remember;
-  $('remember-note').textContent = settings.remember
-    ? 'On: the text of open documents is stored in this browser (without images). Turn it off on shared computers.'
-    : 'Off: closing the browser tab erases everything. Turn it on only on your personal computer.';
+  $('remember-note').textContent = t(settings.remember ? 'settings.rememberOn' : 'settings.rememberOff');
 }
 
 setSync.addEventListener('change', () => {
@@ -592,9 +605,9 @@ $('clear-all').addEventListener('click', clearAll);
 // ---------------------------------------------------------------- layout: view mode & resizer
 
 const VIEW_MODES = [
-  { id: 'editor', label: 'Editor', icon: PenLine },
-  { id: 'both', label: 'Split', icon: Columns2 },
-  { id: 'preview', label: 'Preview', icon: Eye },
+  { id: 'editor', label: 'view.editor', icon: PenLine },
+  { id: 'both', label: 'view.split', icon: Columns2 },
+  { id: 'preview', label: 'view.preview', icon: Eye },
 ] as const;
 
 function setView(mode: (typeof VIEW_MODES)[number]['id']) {
@@ -606,14 +619,21 @@ function setView(mode: (typeof VIEW_MODES)[number]['id']) {
   }
 }
 
-function setupLayout() {
+function renderViewModes() {
   const group = $('view-mode');
-  for (const m of VIEW_MODES) {
-    const b = h('button', { type: 'button', role: 'radio', 'data-mode': m.id, title: m.label, 'aria-label': m.label }, icon(m.icon, 16), h('span', { class: 'seg-label' }, m.label));
-    b.addEventListener('click', () => setView(m.id));
-    group.append(b);
-  }
+  group.replaceChildren(
+    ...VIEW_MODES.map((m) => {
+      const label = t(m.label);
+      const b = h('button', { type: 'button', role: 'radio', 'data-mode': m.id, title: label, 'aria-label': label }, icon(m.icon, 16), h('span', { class: 'seg-label' }, label));
+      b.addEventListener('click', () => setView(m.id));
+      return b;
+    }),
+  );
   setView(settings.view);
+}
+
+function setupLayout() {
+  renderViewModes();
 
   const workspace = $('workspace');
   const resizer = $('resizer');
@@ -656,25 +676,29 @@ function setupLayout() {
 
 // ---------------------------------------------------------------- header
 
-function setupHeader() {
+function renderHeaderActions() {
   const actions: { label: string; title: string; icon: typeof Save; run: () => void; cls?: string }[] = [
-    { label: 'Open', title: 'Open files (Ctrl+O)', icon: FolderOpen, run: () => pickFiles() },
-    { label: 'Folder', title: 'Open a folder with documents and images', icon: FolderInput, run: () => pickFiles(true), cls: 'hide-sm' },
-    { label: 'Save', title: 'Save .md (Ctrl+S)', icon: Save, run: saveActive },
-    { label: 'HTML', title: 'Export to a self-contained HTML file', icon: FileDown, run: exportHtml, cls: 'hide-sm' },
-    { label: 'Print', title: 'Print or save as PDF', icon: Printer, run: () => preview.print(), cls: 'hide-sm' },
+    { label: t('file.open'), title: t('file.openTitle'), icon: FolderOpen, run: () => pickFiles() },
+    { label: t('file.folder'), title: t('file.folderTitle'), icon: FolderInput, run: () => pickFiles(true), cls: 'hide-sm' },
+    { label: t('file.save'), title: t('file.saveTitle'), icon: Save, run: saveActive },
+    { label: t('file.html'), title: t('file.htmlTitle'), icon: FileDown, run: exportHtml, cls: 'hide-sm' },
+    { label: t('file.print'), title: t('file.printTitle'), icon: Printer, run: () => preview.print(), cls: 'hide-sm' },
   ];
-  const group = $('file-actions');
-  for (const a of actions) {
-    const b = h('button', { type: 'button', class: `btn btn-ghost ${a.cls ?? ''}`, title: a.title }, icon(a.icon, 17), h('span', { class: 'btn-label' }, a.label));
-    b.addEventListener('click', a.run);
-    group.append(b);
-  }
+  $('file-actions').replaceChildren(
+    ...actions.map((a) => {
+      const b = h('button', { type: 'button', class: `btn btn-ghost ${a.cls ?? ''}`, title: a.title }, icon(a.icon, 17), h('span', { class: 'btn-label' }, a.label));
+      b.addEventListener('click', a.run);
+      return b;
+    }),
+  );
+}
+
+function setupHeader() {
+  renderHeaderActions();
 
   bindPopover($('protection-btn'), $('protection-panel'));
   const settingsBtn = $('settings-btn');
   settingsBtn.append(icon(Settings));
-  settingsBtn.setAttribute('aria-label', 'Settings');
   bindPopover(settingsBtn, $('settings-panel'));
 
   $('theme-btn').addEventListener('click', () => {
@@ -684,9 +708,67 @@ function setupHeader() {
   });
 
   $('status-issues').addEventListener('click', showIssues);
-  const priv = $('status-private');
-  priv.append(icon(Lock, 13), h('span', { class: 'status-private-text' }, 'Only in your browser'));
-  priv.title = 'Documents never leave your browser: the site has no server to receive them, and network requests are forbidden by its security policy.';
+  $('status-private').prepend(icon(Lock, 13));
+}
+
+// ---------------------------------------------------------------- language
+
+const setLang = $('set-lang') as HTMLSelectElement;
+
+function setupLanguageSelect() {
+  setLang.replaceChildren(
+    h('option', { value: '' }, t('settings.languageAuto')),
+    ...LOCALES.map((l) => h('option', { value: l.code, lang: l.code }, l.name)),
+  );
+  setLang.value = settings.lang ?? '';
+}
+
+setLang.addEventListener('change', async () => {
+  settings.lang = isLocale(setLang.value) ? setLang.value : null;
+  saveSettings();
+  await setLocale(isLocale(settings.lang) ? settings.lang : detectLocale());
+  applyLanguage();
+});
+
+function buildEditorToolbar() {
+  buildToolbar(editor, {
+    main: $('toolbar'),
+    advanced: $('toolbar-advanced'),
+    menu: $('heading-menu'),
+    showMenu: showPopover,
+    advancedOpen: settings.advanced,
+    onAdvancedToggle(open) {
+      settings.advanced = open;
+      saveSettings();
+    },
+  });
+}
+
+/** Re-renders every piece of UI text in the current language, without losing any state. */
+function applyLanguage() {
+  translateDom();
+  setupLanguageSelect();
+  renderHeaderActions();
+  renderViewModes();
+  buildEditorToolbar();
+  editor.relabel();
+  preview.iframe.title = t('preview.frameTitle');
+  $('settings-btn').setAttribute('aria-label', t('settings.title'));
+  syncProtectionUi();
+  syncSettingsUi();
+  applyTheme(false);
+  for (const doc of docs.filter((d) => d.sample && d.pristine)) {
+    doc.name = t('sample.name');
+    doc.path = doc.name;
+    doc.text = doc.savedText = t('sample.body');
+    editor.reset(doc.id, doc.text);
+  }
+  if (active) {
+    updateTabs();
+    updateCounts();
+    updateIssues();
+    scheduleRender(0);
+  }
 }
 
 // ---------------------------------------------------------------- shortcuts
@@ -722,29 +804,18 @@ async function start() {
   // Backup for hosts that drop the frame-ancestors / X-Frame-Options headers:
   // the app refuses to work inside someone else's page (clickjacking).
   if (window.self !== window.top) {
-    document.body.textContent = 'This site cannot be opened inside another page.';
+    document.body.textContent = t('app.framed');
     return;
   }
+  // The language chunk loads in parallel with the preview frame.
+  const localeReady = setLocale(isLocale(settings.lang) ? settings.lang : detectLocale()).catch(() => setLocale('en'));
   setupHeader();
   setupLayout();
-  syncSettingsUi();
-  syncProtectionUi();
-  buildToolbar(editor, {
-    main: $('toolbar'),
-    advanced: $('toolbar-advanced'),
-    menu: $('heading-menu'),
-    showMenu: showPopover,
-    advancedOpen: settings.advanced,
-    onAdvancedToggle(open) {
-      settings.advanced = open;
-      saveSettings();
-    },
-  });
   setupDragAndDrop();
-  applyTheme(false);
-  await preview.setVariant(false, false);
+  await Promise.all([localeReady, preview.setVariant(false, false)]);
+  applyLanguage();
   if (!restoreDocs()) {
-    const doc = createDoc(SAMPLE_NAME, SAMPLE, { pristine: true });
+    const doc = createDoc(t('sample.name'), t('sample.body'), { pristine: true, sample: true });
     activate(doc);
   }
 }

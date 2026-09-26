@@ -1,6 +1,7 @@
 // Checks local media files (dropped together with a document) by their
 // signature ("magic bytes") instead of trusting the file extension.
 import type { Risk } from './url-check';
+import { t, type MessageKey } from '../i18n';
 
 export type MediaCategory = 'image' | 'audio' | 'video';
 
@@ -73,17 +74,17 @@ const CATEGORY_OF: Record<string, MediaCategory> = {
   mp4: 'video', mov: 'video', webm: 'video', avi: 'video',
 };
 
-const EXECUTABLE_LIKE: Record<string, string> = {
-  exe: 'a Windows executable',
-  elf: 'a Linux executable',
-  macho: 'a macOS executable',
-  script: 'a script',
-  html: 'a web page',
-  zip: 'a ZIP archive (or Office document)',
-  rar: 'a RAR archive',
-  '7z': 'a 7z archive',
-  ole: 'a legacy Office document (may contain macros)',
-  pdf: 'a PDF document',
+const EXECUTABLE_LIKE: Record<string, MessageKey> = {
+  exe: 'what.exe',
+  elf: 'what.elf',
+  macho: 'what.macho',
+  script: 'what.script',
+  html: 'what.html',
+  zip: 'what.zip',
+  rar: 'what.rar',
+  '7z': 'what.7z',
+  ole: 'what.ole',
+  pdf: 'what.pdf',
 };
 
 /** Verdict for a local media file. `bytes` must hold at least the first 512 bytes. */
@@ -95,23 +96,23 @@ export function checkMediaFile(name: string, bytes: Uint8Array): FileVerdict {
 
   if (detected in EXECUTABLE_LIKE) {
     risk = 'danger';
-    reasons.push(`File "${name}" pretends to be media but is actually ${EXECUTABLE_LIKE[detected]}`);
+    reasons.push(t('filecheck.disguised', { name, what: t(EXECUTABLE_LIKE[detected]) }));
   } else if (detected === 'unknown') {
     risk = 'warn';
-    reasons.push(`Could not identify the format of "${name}" from its content`);
+    reasons.push(t('filecheck.unknown', { name }));
   } else if (expected && (CATEGORY_OF[detected] === 'video' || CATEGORY_OF[detected] === 'audio') &&
              (expected === 'video' || expected === 'audio')) {
     // mp4 vs m4a, ogg audio vs video: containers overlap, that is fine.
   } else if (expected && CATEGORY_OF[detected] !== expected) {
     risk = 'warn';
-    reasons.push(`The extension of "${name}" does not match its content (${detected})`);
+    reasons.push(t('filecheck.mismatch', { name, detected }));
   }
 
   if (detected === 'svg') {
     const text = new TextDecoder().decode(bytes).toLowerCase();
     if (/<script|\son[a-z]+\s*=|javascript:|<foreignobject|<iframe|<embed|<object/.test(text)) {
       risk = risk === 'danger' ? risk : 'warn';
-      reasons.push(`SVG "${name}" contains active content (scripts or embedded HTML). It is shown as a plain image, where the browser never runs it`);
+      reasons.push(t('filecheck.svgActive', { name }));
     }
   }
   return { risk, reasons, detected };

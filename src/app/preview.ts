@@ -3,6 +3,8 @@
 // there itself. Each protection mode loads a different preview page whose
 // Content-Security-Policy only permits the media that mode allows.
 
+import { t } from '../i18n';
+
 export interface PreviewHandlers {
   onExternalLink(url: string, risky: boolean, reasons: string[]): void;
   onDocLink(docId: string, hash: string | null): void;
@@ -27,7 +29,7 @@ export class Preview {
   constructor(host: HTMLElement, private handlers: PreviewHandlers) {
     this.iframe = document.createElement('iframe');
     this.iframe.className = 'preview-frame';
-    this.iframe.title = 'Document preview';
+    this.iframe.title = t('preview.frameTitle');
     // No allow-scripts: nothing inside the document can ever execute.
     // allow-modals only lets the app call print() on the frame.
     this.iframe.setAttribute('sandbox', 'allow-same-origin allow-modals');
