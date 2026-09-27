@@ -237,3 +237,19 @@ test.describe('phone layout', () => {
     await expect(page.locator('#toolbar-advanced')).toBeHidden();
   });
 });
+
+test('?theme=dark from a link opens the dark theme for this tab without overriding a saved choice', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('/?theme=dark');
+  await expect(preview(page).locator('#content h1')).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  expect(page.url()).not.toContain('theme=');
+  // Survives a reload in the same tab.
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  // A theme picked by the user wins.
+  await page.locator('#theme-btn').click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await page.goto('/?theme=dark');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+});

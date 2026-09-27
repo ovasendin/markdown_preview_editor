@@ -1,5 +1,24 @@
 // Plain ES5 on purpose: must run even where the main app cannot.
 (function () {
+  // Set the theme before the first paint to avoid a white flash.
+  // Order: theme chosen in the app > ?theme= from a link (kept for this tab) > system setting.
+  try {
+    var theme = null;
+    try {
+      theme = (JSON.parse(localStorage.getItem('mpe:settings') || '{}') || {}).theme || null;
+    } catch (e) {}
+    if (theme !== 'light' && theme !== 'dark') {
+      var m = /[?&]theme=(light|dark)\b/.exec(location.search);
+      var hint = m ? m[1] : null;
+      try {
+        if (hint) sessionStorage.setItem('mpe:theme-hint', hint);
+        else hint = sessionStorage.getItem('mpe:theme-hint');
+      } catch (e) {}
+      theme = hint === 'light' || hint === 'dark' ? hint : window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', theme);
+  } catch (e) {}
+
   // A tiny standard polyfill lets the app run on slightly older browsers.
   if (!Object.hasOwn) {
     Object.hasOwn = function (o, k) {

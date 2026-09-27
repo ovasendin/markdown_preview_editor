@@ -45,7 +45,26 @@ let pendingAnchor: string | null = null;
 // ---------------------------------------------------------------- theme
 
 const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
-const effectiveTheme = (): 'light' | 'dark' => settings.theme ?? (systemDark.matches ? 'dark' : 'light');
+
+/** A link can ask for a theme with ?theme=dark|light; it applies to this tab until the user picks one. */
+function readThemeHint(): 'light' | 'dark' | null {
+  const params = new URLSearchParams(location.search);
+  let hint = params.get('theme');
+  try {
+    if (hint === 'light' || hint === 'dark') sessionStorage.setItem('mpe:theme-hint', hint);
+    else hint = sessionStorage.getItem('mpe:theme-hint');
+  } catch {
+    /* storage unavailable: the hint still applies to this page view */
+  }
+  if (params.has('theme')) {
+    params.delete('theme');
+    const query = params.toString();
+    history.replaceState(history.state, '', location.pathname + (query ? '?' + query : '') + location.hash);
+  }
+  return hint === 'light' || hint === 'dark' ? hint : null;
+}
+const themeHint = readThemeHint();
+const effectiveTheme = (): 'light' | 'dark' => settings.theme ?? themeHint ?? (systemDark.matches ? 'dark' : 'light');
 
 function applyTheme(rerender = true) {
   const theme = effectiveTheme();
@@ -57,7 +76,7 @@ function applyTheme(rerender = true) {
   preview?.setTheme(theme);
   if (rerender && preview) scheduleRender(0);
 }
-systemDark.addEventListener('change', () => settings.theme === null && applyTheme());
+systemDark.addEventListener('change', () => settings.theme === null && themeHint === null && applyTheme());
 
 // ---------------------------------------------------------------- editor & preview
 
