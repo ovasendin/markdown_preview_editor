@@ -12,7 +12,7 @@
 
 </div>
 
-### [Try it online →](https://ovasendin.github.io/markdown_preview_editor/)
+### [Try it online →](https://mdprevieweditor.com/)
 
 A static website you host yourself. Everything is processed locally in the browser: there is no backend, no analytics and no CDN. A strict Content-Security-Policy forbids the page from sending data anywhere.
 
