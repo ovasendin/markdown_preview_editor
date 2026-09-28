@@ -211,7 +211,41 @@ export class Preview {
     win.scrollTo(0, a.top + ((line - a.line) / Math.max(1, b.line - a.line)) * (b.top - a.top));
   }
 
-  print(): void {
-    this.iframe.contentWindow?.print();
+  /** Prints the rendered document. Paper is white, so a dark preview is printed in the light theme. */
+  async print(): Promise<void> {
+    const win = this.iframe.contentWindow;
+    const doc = this.doc;
+    if (!win || !doc) return;
+    const theme = this.theme;
+    if (theme === 'dark') {
+      this.theme = 'light';
+      this.applyTheme();
+      await sheetsReady(doc, ['theme-md-light', 'theme-hl-light']);
+    }
+    let restored = false;
+    const restore = () => {
+      if (restored || theme !== 'dark') return;
+      restored = true;
+      this.theme = theme;
+      this.applyTheme();
+    };
+    win.addEventListener('afterprint', restore, { once: true });
+    win.print();
+    // Browsers fire afterprint; the timer only covers ones that don't.
+    if (theme === 'dark') setTimeout(restore, 30000);
   }
+}
+
+/** Waits until the given stylesheets are loaded (a disabled sheet may not have been fetched yet). */
+function sheetsReady(doc: Document, ids: string[]): Promise<void> {
+  const waits = ids.map((id) => {
+    const link = doc.getElementById(id) as HTMLLinkElement | null;
+    if (!link || link.sheet) return Promise.resolve();
+    return new Promise<void>((resolve) => {
+      link.addEventListener('load', () => resolve(), { once: true });
+      link.addEventListener('error', () => resolve(), { once: true });
+      setTimeout(resolve, 1500);
+    });
+  });
+  return Promise.all(waits).then(() => new Promise<void>((r) => requestAnimationFrame(() => r())));
 }

@@ -253,3 +253,29 @@ test('?theme=dark from a link opens the dark theme for this tab without overridi
   await page.goto('/?theme=dark');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
+
+test('printing from the dark theme uses the light theme on paper and restores dark afterwards', async ({ page }) => {
+  await page.goto('/?theme=dark');
+  await expect(preview(page).locator('#content h1')).toBeVisible();
+  // Capture what the page looks like at the moment print() is called.
+  await page.evaluate(() => {
+    const frame = document.querySelector('iframe') as HTMLIFrameElement;
+    const w = frame.contentWindow as Window & { __printed?: { theme?: string; color: string } };
+    w.print = () => {
+      const p = w.document.querySelector('#content p') ?? w.document.body;
+      w.__printed = { theme: w.document.documentElement.dataset.theme, color: w.getComputedStyle(p).color };
+    };
+  });
+  await page.keyboard.press('Control+p');
+  const printed = await page.waitForFunction(() => {
+    const w = (document.querySelector('iframe') as HTMLIFrameElement).contentWindow as Window & { __printed?: unknown };
+    return w.__printed;
+  });
+  const { theme, color } = (await printed.jsonValue()) as { theme: string; color: string };
+  expect(theme).toBe('light');
+  // Dark text on white paper.
+  const [r, g, b] = color.match(/\d+/g)!.map(Number);
+  expect(r + g + b).toBeLessThan(300);
+  await page.evaluate(() => (document.querySelector('iframe') as HTMLIFrameElement).contentWindow!.dispatchEvent(new Event('afterprint')));
+  await expect(preview(page).locator('html')).toHaveAttribute('data-theme', 'dark');
+});
