@@ -662,6 +662,26 @@ button {
   cursor: help;
 }
 
+/* WCAG badge: links to the axe test; the link area is 24px tall (WCAG target size). */
+.status-a11y {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  border-radius: 4px;
+}
+
+.status-a11y img {
+  display: block;
+  height: 18px;
+  width: auto;
+}
+
+@media (max-width: 760px) {
+  .status-a11y {
+    display: none;
+  }
+}
+
 .status-issues {
   display: inline-flex;
   align-items: center;

@@ -7,6 +7,7 @@
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Tracking: none](https://img.shields.io/badge/tracking-none-brightgreen.svg)
 ![Static site](https://img.shields.io/badge/hosting-any%20static%20host-informational.svg)
+[![WCAG 2.2 AA: 0 violations (axe-core)](https://img.shields.io/badge/WCAG%202.2%20AA-0%20violations%20(axe--core)-2e7d32)](tests/e2e/a11y.spec.ts)
 
 ![Screenshot](.github/screenshot.png)
 
@@ -25,6 +26,10 @@ A static website you host yourself. Everything is processed locally in the brows
 - Formatting toolbar with a collapsible *Advanced editor* row.
 - Save as `.md`, export to self-contained HTML, print or save as PDF.
 - 15 interface languages, picked from your browser settings and switchable in Settings: English, Deutsch, Español, Français, Italiano, Português, Nederlands, Svenska, Polski, Українська, Русский, Türkçe, 日本語, 한국어, 简体中文. Each language loads only when it is used.
+
+## Accessibility
+
+The editor and its website meet **WCAG 2.2 AA** with zero violations reported by [axe-core](https://github.com/dequelabs/axe-core). The check runs as part of the test suite ([tests/e2e/a11y.spec.ts](tests/e2e/a11y.spec.ts)) in the light and dark themes, including the preview, open panels and the phone layout; tabs, the pane divider and menus work from the keyboard. Run it yourself with `npm run test:e2e`.
 
 ## Privacy & safety
 
