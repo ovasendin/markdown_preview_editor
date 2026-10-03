@@ -49,6 +49,10 @@ Or build it yourself with `npm ci && npm run build`, then choose how to serve it
 - **Caddy** — copy `dist/` to `/srv` and run `SITE_ADDRESS=your.domain caddy run --config deploy/Caddyfile`.
 - **Locally** — `npm run dev` and open the printed address.
 
+## Links
+
+[![Listed on Open Source Alternatives](https://www.opensourcealternatives.to/badge-osa.svg)](https://www.opensourcealternatives.to)
+
 ## License
 
 [MIT](LICENSE)
