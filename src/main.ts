@@ -227,25 +227,46 @@ async function closeDoc(doc: Doc) {
   schedulePersist();
 }
 
+/** Focuses the active tab after the tab strip is re-rendered (keyboard navigation). */
+const focusActiveTab = () => $('tabs').querySelector<HTMLElement>('.tab.active')?.focus();
+
 function updateTabs() {
   const tabs = $('tabs');
+  // WAI-ARIA tabs: the tablist holds only tabs. The close icon is a mouse shortcut;
+  // from the keyboard a focused tab is closed with Delete, tabs are switched with arrows.
   tabs.replaceChildren(
-    ...docs.map((doc) => {
+    ...docs.map((doc, i) => {
       const selected = doc === active;
       const tab = h('div', {
         class: `tab${selected ? ' active' : ''}${isDirty(doc) && !doc.pristine ? ' dirty' : ''}`,
         role: 'tab',
         'aria-selected': String(selected),
+        'aria-keyshortcuts': 'Delete',
         tabindex: selected ? '0' : '-1',
         title: doc.path,
       });
       const label = h('span', { class: 'tab-name' }, doc.name);
-      const close = h('button', { type: 'button', class: 'tab-close', 'aria-label': t('tab.closeNamed', { name: doc.name }), title: t('tab.close') }, icon(X, 14));
+      const close = h('span', { class: 'tab-close', 'aria-hidden': 'true', title: t('tab.closeNamed', { name: doc.name }) }, icon(X, 14));
       tab.append(h('span', { class: 'tab-dot', 'aria-hidden': 'true' }), label, close);
       tab.addEventListener('click', () => activate(doc));
       tab.addEventListener('auxclick', (e) => e.button === 1 && closeDoc(doc));
       tab.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') activate(doc);
+        const go = (target: Doc | undefined) => {
+          e.preventDefault();
+          if (!target) return;
+          activate(target);
+          focusActiveTab();
+        };
+        if (e.key === 'Enter' || e.key === ' ') go(doc);
+        else if (e.key === 'ArrowRight') go(docs[(i + 1) % docs.length]);
+        else if (e.key === 'ArrowLeft') go(docs[(i - 1 + docs.length) % docs.length]);
+        else if (e.key === 'Home') go(docs[0]);
+        else if (e.key === 'End') go(docs[docs.length - 1]);
+        else if (e.key === 'Delete') {
+          e.preventDefault();
+          closeDoc(doc);
+          focusActiveTab();
+        }
       });
       close.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -254,9 +275,15 @@ function updateTabs() {
       return tab;
     }),
   );
-  const add = h('button', { type: 'button', class: 'tab-new', title: t('tab.new'), 'aria-label': t('tab.new') }, icon(Plus, 16));
-  add.addEventListener('click', newDocument);
-  tabs.append(add);
+  // "New document" sits next to the tablist, not inside it.
+  let add = document.getElementById('tab-new');
+  if (!add) {
+    add = h('button', { type: 'button', id: 'tab-new', class: 'tab-new' }, icon(Plus, 16));
+    add.addEventListener('click', newDocument);
+    tabs.after(add);
+  }
+  add.title = t('tab.new');
+  add.setAttribute('aria-label', t('tab.new'));
   tabs.querySelector('.tab.active')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   document.title = `${active.name} — Markdown Preview`;
 }
@@ -656,7 +683,14 @@ function setupLayout() {
 
   const workspace = $('workspace');
   const resizer = $('resizer');
-  const applySplit = () => workspace.style.setProperty('--split', `${settings.split}%`);
+  // role="separator" that can be focused needs its current value for assistive technology.
+  resizer.setAttribute('aria-valuemin', '20');
+  resizer.setAttribute('aria-valuemax', '80');
+  resizer.setAttribute('aria-controls', 'workspace');
+  const applySplit = () => {
+    workspace.style.setProperty('--split', `${settings.split}%`);
+    resizer.setAttribute('aria-valuenow', String(Math.round(settings.split)));
+  };
   applySplit();
   resizer.addEventListener('pointerdown', (e) => {
     e.preventDefault();

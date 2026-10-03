@@ -113,7 +113,7 @@ export class Editor {
   }
 
   private labels(): Extension[] {
-    return [placeholder(tr('editor.placeholder')), EditorView.contentAttributes.of({ 'aria-label': tr('editor.aria'), spellcheck: 'true' })];
+    return [placeholder(tr('editor.placeholder')), EditorView.contentAttributes.of({ 'aria-label': tr('editor.aria'), spellcheck: 'true', tabindex: '0' })];
   }
 
   /** Re-applies translated placeholder and labels after a language change. */

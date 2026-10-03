@@ -17,23 +17,25 @@
   --border-strong: #cfd4da;
   --text: #1f2328;
   --text-muted: #57606a;
-  --text-faint: #8c959f;
+  --text-faint: #656d76;
   --accent: #4f46e5;
   --accent-hover: #4338ca;
   --accent-soft: rgba(79, 70, 229, 0.14);
   --accent-contrast: #ffffff;
-  --ok: #1a7f37;
+  --ok: #116329;
   --ok-soft: rgba(26, 127, 55, 0.12);
-  --warn: #9a6700;
+  --warn: #7d4e00;
   --warn-soft: rgba(212, 167, 44, 0.18);
   --danger: #cf222e;
+  /* Filled buttons with white text (≥ 4.5:1) */
+  --danger-solid: #cf222e;
   --danger-soft: rgba(207, 34, 46, 0.12);
   --shadow: 0 10px 30px rgba(16, 24, 40, 0.14), 0 2px 6px rgba(16, 24, 40, 0.08);
 
   --cm-heading: #1f2328;
   --cm-link: #0969da;
   --cm-code: #953800;
-  --cm-muted: #8c959f;
+  --cm-muted: #656d76;
   --cm-quote: #57606a;
   --cm-keyword: #cf222e;
   --cm-string: #0a3069;
@@ -58,7 +60,7 @@
   --border-strong: #353e4a;
   --text: #e6edf3;
   --text-muted: #9ba6b2;
-  --text-faint: #6e7781;
+  --text-faint: #8b949e;
   --accent: #8b8cf8;
   --accent-hover: #a5a6fb;
   --accent-soft: rgba(139, 140, 248, 0.18);
@@ -68,13 +70,14 @@
   --warn: #d29922;
   --warn-soft: rgba(210, 153, 34, 0.18);
   --danger: #f85149;
+  --danger-solid: #c93c37;
   --danger-soft: rgba(248, 81, 73, 0.15);
   --shadow: 0 12px 34px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
 
   --cm-heading: #e6edf3;
   --cm-link: #58a6ff;
   --cm-code: #ffa657;
-  --cm-muted: #6e7781;
+  --cm-muted: #8b949e;
   --cm-quote: #9ba6b2;
   --cm-keyword: #ff7b72;
   --cm-string: #a5d6ff;
@@ -220,14 +223,14 @@ button {
 }
 
 .btn-danger {
-  background: var(--danger);
-  border-color: var(--danger);
+  background: var(--danger-solid);
+  border-color: var(--danger-solid);
   color: #fff;
 }
 
 .btn-danger:hover {
-  filter: brightness(1.08);
-  background: var(--danger);
+  filter: brightness(0.92);
+  background: var(--danger-solid);
 }
 
 .btn-block {
@@ -450,8 +453,8 @@ button {
 .tab-new {
   display: grid;
   place-items: center;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border: 0;
   border-radius: 5px;
   background: transparent;
@@ -470,6 +473,12 @@ button {
   width: 28px;
   height: 28px;
   margin: 0 0 2px 4px;
+  align-self: flex-end;
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 /* ------------------------------------------------------------------ toolbar */
