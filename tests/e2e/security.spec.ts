@@ -2,7 +2,7 @@ import { test, expect, type Page, type Request } from '@playwright/test';
 import { openApp, openDoc, preview, setPermissions, dropFiles, PNG_1PX } from './helpers';
 
 const SECRET = 'SECRET_MARKER_7f3a9c';
-const ORIGIN = 'http://localhost:4173';
+const ORIGIN = new URL(process.env.PW_BASE_URL || 'http://localhost:4173').origin;
 
 const HOSTILE_DOC = `# ${SECRET}
 

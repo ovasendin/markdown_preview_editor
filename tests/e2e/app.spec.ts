@@ -189,7 +189,7 @@ test.describe('languages', () => {
     await page.locator('#settings-btn').click();
     await page.locator('#set-lang').selectOption('');
     await expect(page.locator('#protection-btn')).toContainText('Vollständiger Schutz');
-    for (const u of chunks) expect(u.startsWith('http://localhost:4173/')).toBe(true);
+    for (const u of chunks) expect(u.startsWith(`${new URL(page.url()).origin}/`)).toBe(true);
   });
 
   test('switching language keeps edited documents intact', async ({ page }) => {

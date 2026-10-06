@@ -29,7 +29,7 @@ A static website you host yourself. Everything is processed locally in the brows
 
 ## Accessibility
 
-The editor and its website meet **WCAG 2.2 AA** with zero violations reported by [axe-core](https://github.com/dequelabs/axe-core). The check runs as part of the test suite ([tests/e2e/a11y.spec.ts](tests/e2e/a11y.spec.ts)) in the light and dark themes, including the preview, open panels and the phone layout; tabs, the pane divider and menus work from the keyboard. Run it yourself with `npm run test:e2e`.
+The editor and its website meet **WCAG 2.2 AA** with zero violations reported by [axe-core](https://github.com/dequelabs/axe-core). The check runs as part of the test suite ([tests/e2e/a11y.spec.ts](tests/e2e/a11y.spec.ts)) in the light and dark themes, including the preview, open panels and the phone layout; tabs, the pane divider and menus work from the keyboard. Run it yourself with `npm run test:e2e` (or against a live site: `PW_BASE_URL=https://app.mdprevieweditor.com npm run test:e2e`).
 
 ## Privacy & safety
 
