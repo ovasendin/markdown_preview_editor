@@ -1,7 +1,14 @@
-name: Pages
+name: Deploy
 
-# Publishes the built site to GitHub Pages as the live demo.
-# One-time setup: Settings → Pages → Build and deployment → Source: GitHub Actions.
+# On every push to the main branch:
+#  1. builds and tests the editor and uploads it to https://app.mdprevieweditor.com over FTPS;
+#  2. publishes a redirect page to GitHub Pages, so old github.io links keep working.
+#
+# One-time setup: Settings → Secrets and variables → Actions → Repository secrets:
+#   FTP_SERVER    FTP host of the hosting account
+#   FTP_USERNAME  FTP account whose home folder is the app.mdprevieweditor.com document root
+#   FTP_PASSWORD  password of that FTP account
+# GitHub Pages: Settings → Pages → Build and deployment → Source: GitHub Actions.
 on:
   push:
     branches: [main, master]
@@ -13,12 +20,15 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: deploy
+  cancel-in-progress: false
 
 jobs:
-  build:
+  app:
     runs-on: ubuntu-latest
+    environment:
+      name: app
+      url: https://app.mdprevieweditor.com/
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -28,18 +38,27 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
-      # GitHub Pages ignores .htaccess; the same security policy is embedded in every HTML file.
-      - run: rm -f dist/.htaccess
-      - uses: actions/upload-pages-artifact@v5
+      # Uploads only changed files; .htaccess (security headers) goes along with them.
+      - uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          path: dist
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          local-dir: ./dist/
+          server-dir: ./
 
-  deploy:
-    needs: build
+  # Switches github.io over only after the new address has been updated successfully.
+  redirect:
+    needs: app
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/checkout@v7
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: deploy/github-pages
       - id: deployment
         uses: actions/deploy-pages@v5
