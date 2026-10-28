@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
-import { insertCodeBlock, setHeading, toggleLinePrefix } from '../../src/app/commands';
+import { insertCodeBlock, setHeading, toggleLinePrefix, wrapInline } from '../../src/app/commands';
 
 const DOC = 'Привет\nЭто круто\nЭто нет';
 
@@ -63,5 +63,27 @@ describe('other selections are unchanged', () => {
 
   it('selection that fully covers a trailing empty line still selects the text lines', () => {
     expect(run(setHeading(1), 'a\n', 0, 2)).toBe('# a\n');
+  });
+});
+
+describe('inline wrapping keeps markers on the selected line', () => {
+  const bold = wrapInline('**');
+
+  it('a selection that includes the trailing line break is wrapped before it', () => {
+    expect(run(bold, '## Code\nnext', 0, '## Code\n'.length)).toBe('**## Code**\nnext');
+    expect(run(bold, '## Code\n', 0, '## Code\n'.length)).toBe('**## Code**\n');
+  });
+
+  it('leading line breaks stay outside too', () => {
+    expect(run(bold, 'a\n\nword\nb', 'a\n'.length, 'a\n\nword\n'.length)).toBe('a\n\n**word**\nb');
+  });
+
+  it('plain and line-break-only selections behave as before', () => {
+    expect(run(bold, 'word', 0, 4)).toBe('**word**');
+    expect(run(bold, 'a\n\nb', 1, 3)).toBe('a**\n\n**b');
+  });
+
+  it('still unwraps already wrapped text', () => {
+    expect(run(bold, '**word**', 2, 6)).toBe('word');
   });
 });

@@ -1,16 +1,26 @@
 // Markdown formatting commands used by the toolbar and keyboard shortcuts.
-import { EditorSelection, type ChangeSpec, type SelectionRange, type Text } from '@codemirror/state';
+import { EditorSelection, type EditorState, type ChangeSpec, type SelectionRange, type Text } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
 import { SlugRegistry } from '../markdown/slug';
 import { t } from '../i18n';
 
 type Cmd = (view: EditorView) => boolean;
 
+/** Drops line breaks at the edges (e.g. from a triple-click) so markers stay on the selected line. */
+function trimLineBreaks(state: EditorState, range: SelectionRange): SelectionRange {
+  if (range.empty) return range;
+  const text = state.sliceDoc(range.from, range.to);
+  const lead = text.match(/^[\r\n]*/)![0].length;
+  const trail = text.match(/[\r\n]*$/)![0].length;
+  return lead + trail >= text.length ? range : EditorSelection.range(range.from + lead, range.to - trail);
+}
+
 /** Wraps each selection in `before…after`, or unwraps it if already wrapped. */
 export function wrapInline(before: string, after = before, placeholder?: string): Cmd {
   return (view) => {
     const { state } = view;
-    const tr = state.changeByRange((range) => {
+    const tr = state.changeByRange((selection) => {
+      const range = trimLineBreaks(state, selection);
       const text = state.sliceDoc(range.from, range.to);
       const outerBefore = state.sliceDoc(range.from - before.length, range.from);
       const outerAfter = state.sliceDoc(range.to, range.to + after.length);
