@@ -1,5 +1,5 @@
 // Markdown formatting commands used by the toolbar and keyboard shortcuts.
-import { EditorSelection, type ChangeSpec, type SelectionRange } from '@codemirror/state';
+import { EditorSelection, type ChangeSpec, type SelectionRange, type Text } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
 import { SlugRegistry } from '../markdown/slug';
 import { t } from '../i18n';
@@ -39,10 +39,16 @@ export function wrapInline(before: string, after = before, placeholder?: string)
   };
 }
 
+/** Last line touched by a range; a non-empty range ending at a line start does not touch that line. */
+function lastLineOf(doc: Text, range: SelectionRange) {
+  const line = doc.lineAt(range.to);
+  return !range.empty && range.to === line.from && line.number > doc.lineAt(range.from).number ? doc.line(line.number - 1) : line;
+}
+
 function selectedLines(view: EditorView, range: SelectionRange) {
   const { doc } = view.state;
   const first = doc.lineAt(range.from).number;
-  const last = doc.lineAt(range.to).number;
+  const last = lastLineOf(doc, range).number;
   const lines = [];
   for (let n = first; n <= last; n++) lines.push(doc.line(n));
   return lines;
@@ -109,7 +115,7 @@ export function insertBlock(template: string, fallback = ''): Cmd {
     const doc = state.doc;
     const selected = state.sliceDoc(range.from, range.to);
     const startLine = doc.lineAt(range.from);
-    const endLine = doc.lineAt(range.to);
+    const endLine = lastLineOf(doc, range);
     const wholeLines = !range.empty || startLine.text.trim() === '';
     const from = wholeLines ? startLine.from : endLine.to;
     const to = wholeLines ? endLine.to : endLine.to;
